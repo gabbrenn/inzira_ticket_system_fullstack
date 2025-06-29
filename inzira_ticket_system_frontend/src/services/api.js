@@ -9,9 +9,13 @@ const api = axios.create({
   },
 })
 
-// Request interceptor for logging
+// Request interceptor for adding auth token
 api.interceptors.request.use(
   (config) => {
+    const token = localStorage.getItem('token')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
     console.log(`Making ${config.method?.toUpperCase()} request to: ${config.url}`)
     return config
   },
@@ -26,10 +30,23 @@ api.interceptors.response.use(
     return response
   },
   (error) => {
+    if (error.response?.status === 401) {
+      // Unauthorized - clear token and redirect to login
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      window.location.href = '/login'
+    }
     console.error('API Error:', error.response?.data || error.message)
     return Promise.reject(error)
   }
 )
+
+// Auth APIs
+export const authAPI = {
+  login: (data) => api.post('/auth/login', data),
+  register: (data) => api.post('/auth/register', data),
+  getCurrentUser: () => api.get('/auth/me'),
+}
 
 // Admin APIs
 export const adminAPI = {
@@ -57,14 +74,20 @@ export const adminAPI = {
   deleteRoute: (id) => api.delete(`/admin/routes/${id}`),
   
   // Agency management
-  createAgency: (formData) => api.post('/admin/agencies', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  }),
+  createAgency: (formData) => {
+    const config = {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    }
+    return api.post('/admin/agencies', formData, config)
+  },
   getAgencies: () => api.get('/admin/agencies'),
   getAgency: (id) => api.get(`/admin/agencies/${id}`),
-  updateAgency: (id, formData) => api.put(`/admin/agencies/${id}`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  }),
+  updateAgency: (id, formData) => {
+    const config = {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    }
+    return api.put(`/admin/agencies/${id}`, formData, config)
+  },
   resetAgencyPassword: (id) => api.post(`/admin/agencies/${id}/reset-password`),
   deleteAgency: (id) => api.delete(`/admin/agencies/${id}`),
 }

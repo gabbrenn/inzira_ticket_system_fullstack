@@ -16,7 +16,9 @@ import com.inzira.admin.dtos.AgencyUpdateDTO;
 import com.inzira.admin.mappers.AgencyMapper;
 import com.inzira.agency.entities.Agency;
 import com.inzira.agency.repositories.AgencyRepository;
+import com.inzira.shared.entities.User;
 import com.inzira.shared.exceptions.ResourceNotFoundException;
+import com.inzira.shared.repositories.UserRepository;
 import com.inzira.shared.services.FileStorageService;
 import com.inzira.shared.utils.PasswordUtility;
 
@@ -25,6 +27,9 @@ public class AgencyManagementService {
 
     @Autowired
     private AgencyRepository agencyRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Autowired
     private FileStorageService fileStorageService;
@@ -76,6 +81,13 @@ public class AgencyManagementService {
         agency.setPassword(passwordUtility.encodePassword(newPassword));
 
         agencyRepository.save(agency);
+
+        // Also update the User entity if it exists
+        userRepository.findByEmail(agency.getEmail()).ifPresent(user -> {
+            user.setPassword(passwordUtility.encodePassword(newPassword));
+            userRepository.save(user);
+        });
+
         return newPassword;
     }
 
@@ -86,10 +98,13 @@ public class AgencyManagementService {
 
         deleteLogoIfExists(agency.getLogoPath());
 
+        // Also delete the User entity if it exists
+        userRepository.findByEmail(agency.getEmail()).ifPresent(user -> {
+            userRepository.delete(user);
+        });
+
         agencyRepository.deleteById(id);
     }
-
-
 
      // 🔧 Utility: Handle logo replacement
     private void handleLogoUpdate(Agency agency, MultipartFile logoFile) {
