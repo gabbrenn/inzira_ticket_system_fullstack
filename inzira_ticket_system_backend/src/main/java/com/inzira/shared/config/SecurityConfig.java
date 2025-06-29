@@ -36,18 +36,21 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // Public endpoints
+                // Public endpoints - allow all
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/uploads/**").permitAll()
+                .requestMatchers("/api/tickets/verify/**").permitAll()
                 
                 // Admin endpoints
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 
-                // Agency endpoints
+                // Agency endpoints  
                 .requestMatchers("/api/agency/**").hasRole("AGENCY")
                 
                 // Customer endpoints
-                .requestMatchers("/api/customers/**", "/api/bookings/**").hasAnyRole("CUSTOMER", "ADMIN")
+                .requestMatchers("/api/customers/**").hasAnyRole("CUSTOMER", "ADMIN")
+                .requestMatchers("/api/bookings/**").hasAnyRole("CUSTOMER", "ADMIN")
+                .requestMatchers("/api/tickets/**").hasAnyRole("CUSTOMER", "ADMIN")
                 
                 // All other requests need authentication
                 .anyRequest().authenticated()

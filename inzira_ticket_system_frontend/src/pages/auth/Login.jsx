@@ -21,28 +21,38 @@ const Login = () => {
   const onSubmit = async (data) => {
     try {
       setLoading(true)
+      console.log('Attempting login with:', data)
+      
       const response = await authAPI.login(data)
-      const { token, ...userData } = response.data.data
+      console.log('Login response:', response.data)
+      
+      if (response.data.success) {
+        const { token, ...userData } = response.data.data
 
-      login(userData, token)
-      toast.success('Login successful!')
+        login(userData, token)
+        toast.success('Login successful!')
 
-      // Redirect based on role
-      switch (userData.role) {
-        case 'ADMIN':
-          navigate('/admin')
-          break
-        case 'AGENCY':
-          navigate('/agency')
-          break
-        case 'CUSTOMER':
-          navigate('/customer')
-          break
-        default:
-          navigate('/')
+        // Redirect based on role
+        switch (userData.role) {
+          case 'ADMIN':
+            navigate('/admin')
+            break
+          case 'AGENCY':
+            navigate('/agency')
+            break
+          case 'CUSTOMER':
+            navigate('/customer')
+            break
+          default:
+            navigate('/')
+        }
+      } else {
+        toast.error(response.data.message || 'Login failed')
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Login failed')
+      console.error('Login error:', error)
+      const errorMessage = error.response?.data?.message || 'Login failed. Please check your credentials.'
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -95,8 +105,8 @@ const Login = () => {
                   {...register('password', {
                     required: 'Password is required',
                     minLength: {
-                      value: 6,
-                      message: 'Password must be at least 6 characters'
+                      value: 3,
+                      message: 'Password must be at least 3 characters'
                     }
                   })}
                   type={showPassword ? 'text' : 'password'}
@@ -180,6 +190,15 @@ const Login = () => {
               >
                 Register as Customer
               </Link>
+            </div>
+          </div>
+
+          {/* Demo Credentials */}
+          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+            <h4 className="text-sm font-medium text-blue-900 mb-2">Demo Credentials:</h4>
+            <div className="text-xs text-blue-800 space-y-1">
+              <p><strong>Admin:</strong> admin@inzira.com / password123</p>
+              <p><strong>Customer:</strong> customer@inzira.com / password123</p>
             </div>
           </div>
         </div>
