@@ -28,19 +28,27 @@ const Register = () => {
         role: role.toUpperCase()
       }
 
-      console.log('Attempting registration with:', registrationData)
+      console.log('Attempting registration with:', { ...registrationData, password: '***', confirmPassword: '***' })
       const response = await authAPI.register(registrationData)
       console.log('Registration response:', response.data)
 
-      if (response.data.success) {
+      if (response.data && response.data.success) {
         toast.success('Registration successful! Please login to continue.')
         navigate('/login')
       } else {
-        toast.error(response.data.message || 'Registration failed')
+        const errorMessage = response.data?.message || 'Registration failed'
+        toast.error(errorMessage)
       }
     } catch (error) {
       console.error('Registration error:', error)
-      const errorMessage = error.response?.data?.message || 'Registration failed'
+      let errorMessage = 'Registration failed'
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+      
       toast.error(errorMessage)
     } finally {
       setLoading(false)

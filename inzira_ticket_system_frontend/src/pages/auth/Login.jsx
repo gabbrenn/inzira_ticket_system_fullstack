@@ -21,14 +21,15 @@ const Login = () => {
   const onSubmit = async (data) => {
     try {
       setLoading(true)
-      console.log('Attempting login with:', data)
+      console.log('Attempting login with:', { email: data.email, password: '***' })
       
       const response = await authAPI.login(data)
-      console.log('Login response:', response.data)
+      console.log('Login response received:', response.data)
       
-      if (response.data.success) {
+      if (response.data && response.data.success && response.data.data) {
         const { token, ...userData } = response.data.data
 
+        console.log('Login successful, user data:', userData)
         login(userData, token)
         toast.success('Login successful!')
 
@@ -47,11 +48,19 @@ const Login = () => {
             navigate('/')
         }
       } else {
-        toast.error(response.data.message || 'Login failed')
+        console.error('Invalid response structure:', response.data)
+        toast.error('Login failed. Invalid response from server.')
       }
     } catch (error) {
       console.error('Login error:', error)
-      const errorMessage = error.response?.data?.message || 'Login failed. Please check your credentials.'
+      let errorMessage = 'Login failed. Please check your credentials.'
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+      
       toast.error(errorMessage)
     } finally {
       setLoading(false)
