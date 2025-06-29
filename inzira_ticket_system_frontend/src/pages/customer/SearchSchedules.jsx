@@ -35,10 +35,14 @@ const SearchSchedules = () => {
 
   const fetchDistricts = async () => {
     try {
+      setLoading(true)
       const response = await adminAPI.getDistricts()
       setDistricts(response.data.data || [])
     } catch (error) {
-      toast.error('Failed to fetch districts')
+      console.error('Failed to fetch districts:', error)
+      toast.error('Failed to fetch districts. Please try again.')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -83,7 +87,8 @@ const SearchSchedules = () => {
         await fetchRoutePoints(searchForm.destinationId)
       }
     } catch (error) {
-      toast.error('Failed to search schedules')
+      console.error('Search error:', error)
+      toast.error('Failed to search schedules. Please try again.')
       setSchedules([])
     } finally {
       setSearching(false)
@@ -140,6 +145,17 @@ const SearchSchedules = () => {
 
   const originPoints = selectedSchedule ? routePoints[selectedSchedule.agencyRoute.route.origin.id] || [] : []
   const destinationPoints = selectedSchedule ? routePoints[selectedSchedule.agencyRoute.route.destination.id] || [] : []
+
+  if (loading) {
+    return (
+      <div className="px-4 sm:px-6 lg:px-8 fade-in">
+        <div className="text-center py-8">
+          <div className="loading-spinner mx-auto mb-4"></div>
+          <p className="text-gray-500">Loading districts...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 fade-in">

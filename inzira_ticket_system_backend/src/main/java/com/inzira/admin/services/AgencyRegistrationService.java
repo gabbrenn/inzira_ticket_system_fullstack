@@ -62,7 +62,12 @@ public class AgencyRegistrationService {
             Agency agency = agencyMapper.toEntity(registrationDTO);
 
             // Generate and encode password
-            String rawPassword = passwordUtility.generateInitialPassword(registrationDTO.getAgencyName(), registrationDTO.getPhoneNumber());
+            String rawPassword;
+            if (registrationDTO.getPassword() != null && !registrationDTO.getPassword().trim().isEmpty()) {
+                rawPassword = registrationDTO.getPassword();
+            } else {
+                rawPassword = passwordUtility.generateInitialPassword(registrationDTO.getAgencyName(), registrationDTO.getPhoneNumber());
+            }
             agency.setPassword(passwordUtility.encodePassword(rawPassword));
 
             // Store file and set path
@@ -72,7 +77,7 @@ public class AgencyRegistrationService {
             // Save to DB
             Agency savedAgency = agencyRepository.save(agency);
 
-            // Create corresponding User entity
+            // Create corresponding User entity for authentication
             User user = new User();
             user.setEmail(savedAgency.getEmail());
             user.setPassword(passwordEncoder.encode(rawPassword));
