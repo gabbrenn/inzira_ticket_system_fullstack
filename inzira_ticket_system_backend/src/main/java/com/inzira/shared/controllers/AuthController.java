@@ -22,14 +22,20 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<User>> register(@RequestBody RegisterRequest request) {
+        System.out.println("Registration request received for: " + request.getEmail());
+        
         try {
             User user = authService.registerUser(request);
+            System.out.println("Registration successful for: " + request.getEmail());
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(new ApiResponse<>(true, "User registered successfully", user));
         } catch (IllegalArgumentException e) {
+            System.err.println("Registration validation error: " + e.getMessage());
             return ResponseEntity.badRequest()
                     .body(new ApiResponse<>(false, e.getMessage(), null));
         } catch (Exception e) {
+            System.err.println("Registration server error: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(false, "Registration failed: " + e.getMessage(), null));
         }
@@ -37,13 +43,19 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> login(@RequestBody LoginRequest request) {
+        System.out.println("Login request received for: " + request.getEmail());
+        
         try {
             LoginResponse response = authService.login(request);
+            System.out.println("Login successful for: " + request.getEmail());
             return ResponseEntity.ok(new ApiResponse<>(true, "Login successful", response));
         } catch (IllegalArgumentException e) {
+            System.err.println("Login validation error: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new ApiResponse<>(false, e.getMessage(), null));
         } catch (Exception e) {
+            System.err.println("Login server error: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(false, "Login failed: " + e.getMessage(), null));
         }
