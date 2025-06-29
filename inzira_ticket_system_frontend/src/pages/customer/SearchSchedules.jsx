@@ -1,18 +1,29 @@
 import React, { useState, useEffect } from 'react'
-import { Search, MapPin, Calendar, Clock, Users, ArrowRight } from 'lucide-react'
-import { agencyAPI, adminAPI } from '../../services/api'
+import { Search, MapPin, Calendar, Clock, Users, ArrowRight, Download } from 'lucide-react'
+import { agencyAPI, adminAPI, customerAPI } from '../../services/api'
+import { useAuth } from '../../contexts/AuthContext'
 import toast from 'react-hot-toast'
 
 const SearchSchedules = () => {
   const [districts, setDistricts] = useState([])
   const [schedules, setSchedules] = useState([])
+  const [routePoints, setRoutePoints] = useState({})
   const [loading, setLoading] = useState(false)
   const [searching, setSearching] = useState(false)
+  const [showBookingModal, setShowBookingModal] = useState(false)
+  const [selectedSchedule, setSelectedSchedule] = useState(null)
+  const { user } = useAuth()
 
   const [searchForm, setSearchForm] = useState({
     originId: '',
     destinationId: '',
     departureDate: ''
+  })
+
+  const [bookingForm, setBookingForm] = useState({
+    numberOfSeats: 1,
+    pickupPointId: '',
+    dropPointId: ''
   })
 
   useEffect(() => {
@@ -28,6 +39,18 @@ const SearchSchedules = () => {
       setDistricts(response.data.data || [])
     } catch (error) {
       toast.error('Failed to fetch districts')
+    }
+  }
+
+  const fetchRoutePoints = async (districtId) => {
+    try {
+      const response = await adminAPI.getRoutePoints(districtId)
+      setRoutePoints(prev => ({
+        ...prev,
+        [districtId]: response.data.data || []
+      }))
+    } catch (error) {
+      console.error('Failed to fetch route points for district', districtId)
     }
   }
 
@@ -54,6 +77,10 @@ const SearchSchedules = () => {
       
       if (response.data.data.length === 0) {
         toast.info('No schedules found for your search criteria')
+      } else {
+        // Fetch route points for origin and destination
+        await fetchRoutePoints(searchForm.originId)
+        await fetchRoutePoints(searchForm.destinationId)
       }
     } catch (error) {
       toast.error('Failed to search schedules')
@@ -64,8 +91,43 @@ const SearchSchedules = () => {
   }
 
   const handleBookTicket = (schedule) => {
-    // This would typically navigate to a booking form
-    toast.info(`Booking for schedule ${schedule.id} - Feature coming soon!`)
+    if (!user) {
+      toast.error('Please login to book tickets')
+      return
+    }
+    setSelectedSchedule(schedule)
+    setBookingForm({
+      numberOfSeats: 1,
+      pickupPointId: '',
+      dropPointId: ''
+    })
+    setShowBookingModal(true)
+  }
+
+  const handleCreateBooking = async (e) => {
+    e.preventDefault()
+    try {
+      const bookingData = {
+        customer: { id: user.roleEntityId },
+        schedule: { id: selectedSchedule.id },
+        pickupPoint: { id: parseInt(bookingForm.pickupPointId) },
+        dropPoint: { id: parseInt(bookingForm.dropPointId) },
+        numberOfSeats: parseInt(bookingForm.numberOfSeats)
+      }
+
+      const response = await customerAPI.createBooking(bookingData)
+      toast.success('Booking created successfully!')
+      setShowBookingModal(false)
+      
+      // Refresh schedules to update available seats
+      handleSearch({ preventDefault: () => {} })
+      
+      // Show booking details
+      const booking = response.data.data
+      toast.success(`Booking Reference: ${booking.bookingReference}`)
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to create booking')
+    }
   }
 
   const getOriginDistrict = (originId) => {
@@ -75,6 +137,9 @@ const SearchSchedules = () => {
   const getDestinationDistrict = (destinationId) => {
     return districts.find(d => d.id.toString() === destinationId)?.name || ''
   }
+
+  const originPoints = selectedSchedule ? routePoints[selectedSchedule.agencyRoute.route.origin.id] || [] : []
+  const destinationPoints = selectedSchedule ? routePoints[selectedSchedule.agencyRoute.route.destination.id] || [] : []
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 fade-in">
@@ -254,6 +319,115 @@ const SearchSchedules = () => {
           )}
         </div>
       </div>
+
+      {/* Booking Modal */}
+      {showBookingModal && selectedSchedule && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Book Your Ticket</h3>
+              <button
+                onClick={() => setShowBookingModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+              <h4 className="font-medium text-gray-900 mb-2">Journey Details</h4>
+              <div className="text-sm text-gray-600 space-y-1">
+                <p><strong>Agency:</strong> {selectedSchedule.agencyRoute.agency.agencyName}</p>
+                <p><strong>Route:</strong> {selectedSchedule.agencyRoute.route.origin.name} → {selectedSchedule.agencyRoute.route.destination.name}</p>
+                <p><strong>Date:</strong> {selectedSchedule.departureDate}</p>
+                <p><strong>Time:</strong> {selectedSchedule.departureTime} - {selectedSchedule.arrivalTime}</p>
+                <p><strong>Bus:</strong> {selectedSchedule.bus.plateNumber} ({selectedSchedule.bus.busType})</p>
+                <p><strong>Price per seat:</strong> {selectedSchedule.agencyRoute.price} RWF</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleCreateBooking}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Number of Seats
+                  </label>
+                  <select
+                    value={bookingForm.numberOfSeats}
+                    onChange={(e) => setBookingForm({ ...bookingForm, numberOfSeats: e.target.value })}
+                    className="input w-full"
+                    required
+                  >
+                    {[...Array(Math.min(selectedSchedule.availableSeats, 5))].map((_, i) => (
+                      <option key={i + 1} value={i + 1}>{i + 1} seat{i > 0 ? 's' : ''}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Pickup Point
+                  </label>
+                  <select
+                    value={bookingForm.pickupPointId}
+                    onChange={(e) => setBookingForm({ ...bookingForm, pickupPointId: e.target.value })}
+                    className="input w-full"
+                    required
+                  >
+                    <option value="">Select pickup point</option>
+                    {originPoints.map((point) => (
+                      <option key={point.id} value={point.id}>
+                        {point.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Drop Point
+                  </label>
+                  <select
+                    value={bookingForm.dropPointId}
+                    onChange={(e) => setBookingForm({ ...bookingForm, dropPointId: e.target.value })}
+                    className="input w-full"
+                    required
+                  >
+                    <option value="">Select drop point</option>
+                    {destinationPoints.map((point) => (
+                      <option key={point.id} value={point.id}>
+                        {point.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="p-4 bg-blue-50 rounded-lg">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium text-gray-900">Total Amount:</span>
+                    <span className="text-xl font-bold text-primary-600">
+                      {(selectedSchedule.agencyRoute.price * bookingForm.numberOfSeats).toLocaleString()} RWF
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex space-x-3 mt-6">
+                <button type="submit" className="btn-primary flex-1">
+                  Confirm Booking
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowBookingModal(false)}
+                  className="btn-secondary flex-1"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Popular Routes */}
       <div className="mt-12 bg-white rounded-lg shadow-sm border border-gray-200 p-6">

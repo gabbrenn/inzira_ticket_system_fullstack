@@ -47,6 +47,14 @@ public class Booking {
     @Column(nullable = false)
     private String paymentStatus; // PENDING, PAID, REFUNDED
 
+    // QR Code for ticket verification
+    @Column(length = 1000)
+    private String qrCode;
+
+    // Ticket download URL
+    @Column(length = 500)
+    private String ticketPdfPath;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;
