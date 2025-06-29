@@ -4,17 +4,17 @@ import { Toaster } from 'react-hot-toast'
 import Layout from './components/Layout'
 import Home from './pages/Home'
 import AdminDashboard from './pages/admin/AdminDashboard'
-// import AgencyDashboard from './pages/agency/AgencyDashboard'
-// import CustomerDashboard from './pages/customer/CustomerDashboard'
+import AgencyDashboard from './pages/agency/AgencyDashboard'
+import CustomerDashboard from './pages/customer/CustomerDashboard'
 import DistrictManagement from './pages/admin/DistrictManagement'
 import RouteManagement from './pages/admin/RouteManagement'
 import AgencyManagement from './pages/admin/AgencyManagement'
-// import BusManagement from './pages/agency/BusManagement'
-// import DriverManagement from './pages/agency/DriverManagement'
-// import ScheduleManagement from './pages/agency/ScheduleManagement'
-// import AgencyRouteManagement from './pages/agency/AgencyRouteManagement'
-// import BookingManagement from './pages/customer/BookingManagement'
-// import SearchSchedules from './pages/customer/SearchSchedules'
+import BusManagement from './pages/agency/BusManagement'
+import DriverManagement from './pages/agency/DriverManagement'
+import ScheduleManagement from './pages/agency/ScheduleManagement'
+import AgencyRouteManagement from './pages/agency/AgencyRouteManagement'
+import BookingManagement from './pages/customer/BookingManagement'
+import SearchSchedules from './pages/customer/SearchSchedules'
 
 function App() {
   return (
@@ -31,16 +31,16 @@ function App() {
             <Route path="/admin/agencies" element={<AgencyManagement />} />
             
             {/* Agency Routes */}
-            {/* <Route path="/agency" element={<AgencyDashboard />} />
+            <Route path="/agency" element={<AgencyDashboard />} />
             <Route path="/agency/buses" element={<BusManagement />} />
             <Route path="/agency/drivers" element={<DriverManagement />} />
             <Route path="/agency/routes" element={<AgencyRouteManagement />} />
-            <Route path="/agency/schedules" element={<ScheduleManagement />} /> */}
+            <Route path="/agency/schedules" element={<ScheduleManagement />} />
             
             {/* Customer Routes */}
-            {/* <Route path="/customer" element={<CustomerDashboard />} />
+            <Route path="/customer" element={<CustomerDashboard />} />
             <Route path="/customer/search" element={<SearchSchedules />} />
-            <Route path="/customer/bookings" element={<BookingManagement />} /> */}
+            <Route path="/customer/bookings" element={<BookingManagement />} />
           </Routes>
         </Layout>
         <Toaster 
