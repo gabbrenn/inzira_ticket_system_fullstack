@@ -60,12 +60,18 @@ public class AgencyManagementService {
         Agency agency = agencyRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Agency with ID " + id + " not found"));
 
+        // Store current logo path before updating
+        String currentLogoPath = agency.getLogoPath();
+
         // Update agency fields from DTO
         agencyMapper.updateEntityFromDTO(dto, agency);
 
-        // Handle optional logo
+        // Handle optional logo - only update if new file is provided
         if (logoFile != null && !logoFile.isEmpty()) {
             handleLogoUpdate(agency, logoFile);
+        } else {
+            // Keep existing logo if no new file is provided
+            agency.setLogoPath(currentLogoPath);
         }
 
         Agency saved = agencyRepository.save(agency);

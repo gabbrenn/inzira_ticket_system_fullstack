@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import { Search, Calendar, MapPin, Clock, CreditCard, Download, X, CheckCircle } from 'lucide-react'
+import { Search, Calendar, MapPin, Clock, CreditCard, Download, X, CheckCircle, QrCode } from 'lucide-react'
 import { customerAPI } from '../../services/api'
+import { useAuth } from '../../contexts/AuthContext'
 import toast from 'react-hot-toast'
 
 const BookingManagement = () => {
@@ -8,17 +9,20 @@ const BookingManagement = () => {
   const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('ALL')
+  const [showQRModal, setShowQRModal] = useState(false)
+  const [selectedBooking, setSelectedBooking] = useState(null)
+  const { user } = useAuth()
 
   useEffect(() => {
-    fetchBookings()
-  }, [])
+    if (user?.roleEntityId) {
+      fetchBookings()
+    }
+  }, [user])
 
   const fetchBookings = async () => {
     try {
       setLoading(true)
-      // For demo purposes, we'll use a hardcoded customer ID
-      // In a real app, this would come from authentication context
-      const response = await customerAPI.getBookingsByCustomer(1)
+      const response = await customerAPI.getBookingsByCustomer(user.roleEntityId)
       setBookings(response.data.data || [])
     } catch (error) {
       toast.error('Failed to fetch bookings')
@@ -47,6 +51,40 @@ const BookingManagement = () => {
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to confirm booking')
     }
+  }
+
+  const handleDownloadTicket = async (bookingId) => {
+    try {
+      const response = await fetch(`http://localhost:8080/api/tickets/download/${bookingId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to download ticket')
+      }
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.style.display = 'none'
+      a.href = url
+      a.download = `ticket_${bookings.find(b => b.id === bookingId)?.bookingReference}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      
+      toast.success('Ticket downloaded successfully')
+    } catch (error) {
+      toast.error('Failed to download ticket')
+    }
+  }
+
+  const showQRCode = (booking) => {
+    setSelectedBooking(booking)
+    setShowQRModal(true)
   }
 
   const getStatusBadge = (status) => {
@@ -249,13 +287,22 @@ const BookingManagement = () => {
                         </>
                       )}
                       {(booking.status === 'CONFIRMED' || booking.status === 'COMPLETED') && (
-                        <button
-                          onClick={() => toast.info('Download feature coming soon!')}
-                          className="btn-outline text-sm py-2 px-3"
-                        >
-                          <Download className="h-3 w-3 mr-1" />
-                          Download
-                        </button>
+                        <>
+                          <button
+                            onClick={() => showQRCode(booking)}
+                            className="btn-outline text-sm py-2 px-3"
+                          >
+                            <QrCode className="h-3 w-3 mr-1" />
+                            QR Code
+                          </button>
+                          <button
+                            onClick={() => handleDownloadTicket(booking.id)}
+                            className="btn-outline text-sm py-2 px-3"
+                          >
+                            <Download className="h-3 w-3 mr-1" />
+                            Download
+                          </button>
+                        </>
                       )}
                     </div>
                   </div>
@@ -265,6 +312,51 @@ const BookingManagement = () => {
           )}
         </div>
       </div>
+
+      {/* QR Code Modal */}
+      {showQRModal && selectedBooking && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Ticket QR Code</h3>
+              <button
+                onClick={() => setShowQRModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="text-center">
+              <div className="mb-4">
+                <p className="text-sm text-gray-600 mb-2">Booking Reference:</p>
+                <p className="font-semibold text-gray-900">{selectedBooking.bookingReference}</p>
+              </div>
+
+              {selectedBooking.qrCode && (
+                <div className="mb-4">
+                  <img
+                    src={`data:image/png;base64,${selectedBooking.qrCode}`}
+                    alt="QR Code"
+                    className="mx-auto border border-gray-200 rounded-lg"
+                  />
+                </div>
+              )}
+
+              <div className="text-sm text-gray-600 mb-4">
+                <p>Show this QR code to the driver for verification</p>
+              </div>
+
+              <button
+                onClick={() => setShowQRModal(false)}
+                className="btn-primary w-full"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Booking Summary */}
       <div className="mt-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">

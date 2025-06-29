@@ -19,6 +19,8 @@ import com.inzira.shared.repositories.BookingRepository;
 import com.inzira.shared.repositories.CustomerRepository;
 import com.inzira.shared.repositories.RoutePointRepository;
 import com.inzira.shared.repositories.ScheduleRepository;
+import com.inzira.shared.services.QRCodeService;
+import com.inzira.shared.services.PDFTicketService;
 
 @Service
 public class BookingService {
@@ -34,6 +36,12 @@ public class BookingService {
 
     @Autowired
     private RoutePointRepository routePointRepository;
+
+    @Autowired
+    private QRCodeService qrCodeService;
+
+    @Autowired
+    private PDFTicketService pdfTicketService;
 
     @Transactional
     public Booking createBooking(Booking booking) {
@@ -77,6 +85,15 @@ public class BookingService {
         BigDecimal pricePerSeat = BigDecimal.valueOf(schedule.getAgencyRoute().getPrice());
         BigDecimal totalAmount = pricePerSeat.multiply(BigDecimal.valueOf(booking.getNumberOfSeats()));
 
+        // Generate QR Code
+        String qrData = qrCodeService.generateTicketQRData(
+            bookingReference,
+            customer.getEmail(),
+            schedule.getAgencyRoute().getRoute().getOrigin().getName() + " → " + schedule.getAgencyRoute().getRoute().getDestination().getName(),
+            schedule.getDepartureDate().toString()
+        );
+        String qrCode = qrCodeService.generateQRCode(qrData);
+
         // Set booking details
         booking.setCustomer(customer);
         booking.setSchedule(schedule);
@@ -86,12 +103,26 @@ public class BookingService {
         booking.setTotalAmount(totalAmount);
         booking.setStatus("PENDING");
         booking.setPaymentStatus("PENDING");
+        booking.setQrCode(qrCode);
+
+        // Save booking first
+        Booking savedBooking = bookingRepository.save(booking);
+
+        // Generate PDF ticket
+        try {
+            String pdfPath = pdfTicketService.generateTicketPDF(savedBooking);
+            savedBooking.setTicketPdfPath(pdfPath);
+            savedBooking = bookingRepository.save(savedBooking);
+        } catch (Exception e) {
+            // PDF generation failed, but booking is still valid
+            System.err.println("Failed to generate PDF ticket: " + e.getMessage());
+        }
 
         // Update available seats
         schedule.setAvailableSeats(schedule.getAvailableSeats() - booking.getNumberOfSeats());
         scheduleRepository.save(schedule);
 
-        return bookingRepository.save(booking);
+        return savedBooking;
     }
 
     public List<Booking> getAllBookings() {
@@ -126,6 +157,7 @@ public class BookingService {
         }
 
         booking.setStatus("CONFIRMED");
+        booking.setPaymentStatus("PAID");
         return bookingRepository.save(booking);
     }
 
