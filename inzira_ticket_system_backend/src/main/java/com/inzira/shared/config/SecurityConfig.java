@@ -50,8 +50,14 @@ public class SecurityConfig {
                 
                 // Customer endpoints
                 .requestMatchers("/api/customers/**").hasAnyRole("CUSTOMER", "ADMIN")
-                .requestMatchers("/api/bookings/**").hasAnyRole("CUSTOMER", "ADMIN")
-                .requestMatchers("/api/tickets/**").hasAnyRole("CUSTOMER", "ADMIN")
+                .requestMatchers("/api/bookings/**").hasAnyRole("CUSTOMER", "ADMIN", "AGENCY")
+                .requestMatchers("/api/tickets/**").hasAnyRole("CUSTOMER", "ADMIN", "AGENCY")
+                
+                // Shared endpoints that multiple roles can access
+                .requestMatchers("/api/admin/districts").hasAnyRole("ADMIN", "CUSTOMER", "AGENCY")
+                .requestMatchers("/api/admin/districts/**").hasAnyRole("ADMIN", "CUSTOMER", "AGENCY")
+                .requestMatchers("/api/admin/routes").hasAnyRole("ADMIN", "AGENCY")
+                .requestMatchers("/api/agency/schedules/search").hasAnyRole("CUSTOMER", "AGENCY")
                 
                 // All other requests need authentication
                 .anyRequest().authenticated()
