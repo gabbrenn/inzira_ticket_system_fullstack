@@ -91,7 +91,7 @@ public class AuthService {
     public LoginResponse login(LoginRequest request) {
         // Find user by email
         User user = userRepository.findByEmailAndStatus(request.getEmail(), "ACTIVE")
-                .orElseThrow(() -> new ResourceNotFoundException("Invalid email or password"));
+                .orElseThrow(() -> new IllegalArgumentException("Invalid email or password"));
 
         // Verify password
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
