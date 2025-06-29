@@ -48,6 +48,21 @@ export const authAPI = {
   getCurrentUser: () => api.get('/auth/me'),
 }
 
+// Shared APIs (accessible by multiple roles)
+export const sharedAPI = {
+  // Districts - accessible by all authenticated users
+  getDistricts: () => api.get('/admin/districts'),
+  getDistrict: (id) => api.get(`/admin/districts/${id}`),
+  getRoutePoints: (districtId) => api.get(`/admin/districts/${districtId}/points`),
+  
+  // Routes - accessible by admin and agency
+  getRoutes: () => api.get('/admin/routes'),
+  getRoute: (id) => api.get(`/admin/routes/${id}`),
+  
+  // Schedules search - accessible by customers and agencies
+  searchSchedules: (params) => api.get('/agency/schedules/search', { params }),
+}
+
 // Admin APIs
 export const adminAPI = {
   // Admin registration
@@ -55,21 +70,21 @@ export const adminAPI = {
   
   // District management
   createDistrict: (data) => api.post('/admin/districts', data),
-  getDistricts: () => api.get('/admin/districts'),
-  getDistrict: (id) => api.get(`/admin/districts/${id}`),
+  getDistricts: () => sharedAPI.getDistricts(),
+  getDistrict: (id) => sharedAPI.getDistrict(id),
   updateDistrict: (id, data) => api.put(`/admin/districts/${id}`, data),
   deleteDistrict: (id) => api.delete(`/admin/districts/${id}`),
   
   // Route points
   addRoutePoint: (districtId, data) => api.post(`/admin/districts/${districtId}/points`, data),
-  getRoutePoints: (districtId) => api.get(`/admin/districts/${districtId}/points`),
+  getRoutePoints: (districtId) => sharedAPI.getRoutePoints(districtId),
   updateRoutePoint: (districtId, pointId, data) => api.put(`/admin/districts/${districtId}/points/${pointId}`, data),
   deleteRoutePoint: (districtId, pointId) => api.delete(`/admin/districts/${districtId}/points/${pointId}`),
   
   // Route management
   createRoute: (data) => api.post('/admin/routes', data),
-  getRoutes: () => api.get('/admin/routes'),
-  getRoute: (id) => api.get(`/admin/routes/${id}`),
+  getRoutes: () => sharedAPI.getRoutes(),
+  getRoute: (id) => sharedAPI.getRoute(id),
   updateRoute: (id, data) => api.put(`/admin/routes/${id}`, data),
   deleteRoute: (id) => api.delete(`/admin/routes/${id}`),
   
@@ -125,10 +140,15 @@ export const agencyAPI = {
   getSchedules: () => api.get('/agency/schedules'),
   getSchedule: (id) => api.get(`/agency/schedules/${id}`),
   getSchedulesByAgency: (agencyId) => api.get(`/agency/schedules/agency/${agencyId}`),
-  searchSchedules: (params) => api.get('/agency/schedules/search', { params }),
+  searchSchedules: (params) => sharedAPI.searchSchedules(params),
   updateSchedule: (id, data) => api.put(`/agency/schedules/${id}`, data),
   cancelSchedule: (id) => api.put(`/agency/schedules/${id}/cancel`),
   deleteSchedule: (id) => api.delete(`/agency/schedules/${id}`),
+  
+  // Shared access
+  getDistricts: () => sharedAPI.getDistricts(),
+  getRoutePoints: (districtId) => sharedAPI.getRoutePoints(districtId),
+  getRoutes: () => sharedAPI.getRoutes(),
 }
 
 // Customer APIs
@@ -150,6 +170,11 @@ export const customerAPI = {
   getBookingsBySchedule: (scheduleId) => api.get(`/bookings/schedule/${scheduleId}`),
   confirmBooking: (id) => api.put(`/bookings/${id}/confirm`),
   cancelBooking: (id) => api.put(`/bookings/${id}/cancel`),
+  
+  // Shared access
+  getDistricts: () => sharedAPI.getDistricts(),
+  getRoutePoints: (districtId) => sharedAPI.getRoutePoints(districtId),
+  searchSchedules: (params) => sharedAPI.searchSchedules(params),
 }
 
 export default api

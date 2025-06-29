@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Search, MapPin, Calendar, Clock, Users, ArrowRight, Download } from 'lucide-react'
-import { agencyAPI, adminAPI, customerAPI } from '../../services/api'
+import { customerAPI } from '../../services/api'
 import { useAuth } from '../../contexts/AuthContext'
 import toast from 'react-hot-toast'
 
@@ -36,7 +36,8 @@ const SearchSchedules = () => {
   const fetchDistricts = async () => {
     try {
       setLoading(true)
-      const response = await adminAPI.getDistricts()
+      // Use customerAPI which has proper access to districts
+      const response = await customerAPI.getDistricts()
       setDistricts(response.data.data || [])
     } catch (error) {
       console.error('Failed to fetch districts:', error)
@@ -48,7 +49,8 @@ const SearchSchedules = () => {
 
   const fetchRoutePoints = async (districtId) => {
     try {
-      const response = await adminAPI.getRoutePoints(districtId)
+      // Use customerAPI for route points access
+      const response = await customerAPI.getRoutePoints(districtId)
       setRoutePoints(prev => ({
         ...prev,
         [districtId]: response.data.data || []
@@ -72,7 +74,8 @@ const SearchSchedules = () => {
 
     try {
       setSearching(true)
-      const response = await agencyAPI.searchSchedules({
+      // Use customerAPI for schedule search
+      const response = await customerAPI.searchSchedules({
         originId: searchForm.originId,
         destinationId: searchForm.destinationId,
         departureDate: searchForm.departureDate
