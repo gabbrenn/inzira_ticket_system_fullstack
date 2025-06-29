@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Plus, Edit, Trash2, Route, Save, X, MapPin } from 'lucide-react'
-import { agencyAPI, adminAPI } from '../../services/api'
+import { agencyAPI } from '../../services/api'
 import toast from 'react-hot-toast'
 
 const AgencyRouteManagement = () => {
@@ -37,7 +37,8 @@ const AgencyRouteManagement = () => {
 
   const fetchRoutes = async () => {
     try {
-      const response = await adminAPI.getRoutes()
+      // Use agencyAPI which has proper access to routes
+      const response = await agencyAPI.getRoutes()
       setRoutes(response.data.data || [])
     } catch (error) {
       toast.error('Failed to fetch routes')
@@ -46,7 +47,8 @@ const AgencyRouteManagement = () => {
 
   const fetchRoutePoints = async (districtId) => {
     try {
-      const response = await adminAPI.getRoutePoints(districtId)
+      // Use agencyAPI for route points access
+      const response = await agencyAPI.getRoutePoints(districtId)
       setRoutePoints(prev => ({
         ...prev,
         [districtId]: response.data.data || []

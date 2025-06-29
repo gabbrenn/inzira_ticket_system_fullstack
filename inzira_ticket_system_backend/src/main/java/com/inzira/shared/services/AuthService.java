@@ -13,9 +13,11 @@ import com.inzira.shared.dtos.LoginRequest;
 import com.inzira.shared.dtos.LoginResponse;
 import com.inzira.shared.dtos.RegisterRequest;
 import com.inzira.shared.entities.Customer;
+import com.inzira.shared.entities.Driver;
 import com.inzira.shared.entities.User;
 import com.inzira.shared.exceptions.ResourceNotFoundException;
 import com.inzira.shared.repositories.CustomerRepository;
+import com.inzira.shared.repositories.DriverRepository;
 import com.inzira.shared.repositories.UserRepository;
 import com.inzira.shared.security.JwtUtil;
 
@@ -33,6 +35,9 @@ public class AuthService {
 
     @Autowired
     private CustomerRepository customerRepository;
+
+    @Autowired
+    private DriverRepository driverRepository;
 
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
