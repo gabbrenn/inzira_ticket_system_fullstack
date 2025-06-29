@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.util.List;
 
 @RestController
@@ -22,6 +24,7 @@ public class AgencyManagementController {
 
     private final AgencyManagementService agencyManagementService;
     private final AgencyRegistrationService agencyRegistrationService;
+    private final ObjectMapper objectMapper;
 
     // ✅ Create agency
     @PostMapping
@@ -54,12 +57,20 @@ public class AgencyManagementController {
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<AgencyDTO>> updateAgency(
             @PathVariable Long id,
-            @RequestPart("agency") AgencyUpdateDTO updatedDto,
+            @RequestPart("agency") String agencyJson,
             @RequestPart(value = "logo", required = false) MultipartFile logoFile) {
 
-        AgencyDTO updatedAgency = agencyManagementService.updateAgency(id, updatedDto, logoFile);
-        setLogoFullUrl(updatedAgency);
-        return ResponseEntity.ok(new ApiResponse<>(true, "Agency updated successfully", updatedAgency));
+        try {
+            // Parse the JSON string to AgencyUpdateDTO
+            AgencyUpdateDTO updatedDto = objectMapper.readValue(agencyJson, AgencyUpdateDTO.class);
+            
+            AgencyDTO updatedAgency = agencyManagementService.updateAgency(id, updatedDto, logoFile);
+            setLogoFullUrl(updatedAgency);
+            return ResponseEntity.ok(new ApiResponse<>(true, "Agency updated successfully", updatedAgency));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                .body(new ApiResponse<>(false, "Invalid agency data: " + e.getMessage()));
+        }
     }
 
     // ✅ Reset password

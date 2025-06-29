@@ -69,10 +69,11 @@ const AgencyManagement = () => {
       const updateData = { ...agencyForm }
       delete updateData.password
       
-      // Append each field individually to FormData
-      Object.keys(updateData).forEach(key => {
-        formData.append(key, updateData[key])
+      // Create a JSON blob for the agency data
+      const agencyBlob = new Blob([JSON.stringify(updateData)], {
+        type: 'application/json'
       })
+      formData.append('agency', agencyBlob)
       
       // Add logo file if selected
       if (logoFile) {
