@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Plus, Edit, Trash2, Users, Save, X, Key, Eye, EyeOff } from 'lucide-react'
 import { agencyAPI } from '../../services/api'
+import { useAuth } from '../../contexts/AuthContext'
 import toast from 'react-hot-toast'
 
 const DriverManagement = () => {
@@ -9,6 +10,7 @@ const DriverManagement = () => {
   const [showForm, setShowForm] = useState(false)
   const [editingDriver, setEditingDriver] = useState(null)
   const [showPassword, setShowPassword] = useState({})
+  const { user } = useAuth()
 
   const [driverForm, setDriverForm] = useState({
     firstName: '',
@@ -21,13 +23,16 @@ const DriverManagement = () => {
   })
 
   useEffect(() => {
-    fetchDrivers()
+    if (user?.roleEntityId) {
+      fetchDrivers()
+    }
   }, [])
 
   const fetchDrivers = async () => {
     try {
       setLoading(true)
-      const response = await agencyAPI.getDrivers()
+      // Fetch drivers for the authenticated agency
+      const response = await agencyAPI.getDriversByAgency(user.roleEntityId)
       setDrivers(response.data.data || [])
     } catch (error) {
       toast.error('Failed to fetch drivers')
@@ -41,7 +46,7 @@ const DriverManagement = () => {
     try {
       await agencyAPI.createDriver({
         ...driverForm,
-        agency: { id: 1 } // Hardcoded for demo
+        agency: { id: user.roleEntityId }
       })
       toast.success('Driver created successfully')
       resetForm()

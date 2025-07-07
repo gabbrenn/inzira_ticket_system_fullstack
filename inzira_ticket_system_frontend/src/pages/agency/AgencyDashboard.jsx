@@ -1,8 +1,11 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { Bus, Users, Route, Calendar, Plus, BarChart3 } from 'lucide-react'
+import { useAuth } from '../../contexts/AuthContext'
 
 const AgencyDashboard = () => {
+  const { user } = useAuth()
+
   const agencyModules = [
     {
       title: 'Bus Management',
@@ -49,7 +52,7 @@ const AgencyDashboard = () => {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Agency Dashboard</h1>
         <p className="mt-2 text-gray-600">
-          Manage your bus agency operations from this central hub
+          Welcome {user?.firstName}! Manage your bus agency operations from this central hub
         </p>
       </div>
 

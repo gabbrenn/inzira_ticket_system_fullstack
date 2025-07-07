@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Plus, Edit, Trash2, Route, Save, X, MapPin } from 'lucide-react'
 import { agencyAPI } from '../../services/api'
+import { useAuth } from '../../contexts/AuthContext'
 import toast from 'react-hot-toast'
 
 const AgencyRouteManagement = () => {
@@ -9,9 +10,10 @@ const AgencyRouteManagement = () => {
   const [routePoints, setRoutePoints] = useState({})
   const [loading, setLoading] = useState(false)
   const [showForm, setShowForm] = useState(false)
+  const { user } = useAuth()
 
   const [routeForm, setRouteForm] = useState({
-    agencyId: 1, // Hardcoded for demo
+    agencyId: '',
     routeId: '',
     price: '',
     pickupPointIds: [],
@@ -19,14 +21,18 @@ const AgencyRouteManagement = () => {
   })
 
   useEffect(() => {
-    fetchAgencyRoutes()
-    fetchRoutes()
+    if (user?.roleEntityId) {
+      setRouteForm(prev => ({ ...prev, agencyId: user.roleEntityId }))
+      fetchAgencyRoutes()
+      fetchRoutes()
+    }
   }, [])
 
   const fetchAgencyRoutes = async () => {
     try {
       setLoading(true)
-      const response = await agencyAPI.getAgencyRoutes()
+      // Fetch agency routes for the authenticated agency
+      const response = await agencyAPI.getRoutesByAgency(user.roleEntityId)
       setAgencyRoutes(response.data.data || [])
     } catch (error) {
       toast.error('Failed to fetch agency routes')
@@ -75,6 +81,7 @@ const AgencyRouteManagement = () => {
     try {
       await agencyAPI.createAgencyRoute({
         ...routeForm,
+        agencyId: user.roleEntityId,
         price: parseFloat(routeForm.price)
       })
       toast.success('Agency route created successfully')
@@ -99,7 +106,7 @@ const AgencyRouteManagement = () => {
 
   const resetForm = () => {
     setRouteForm({
-      agencyId: 1,
+      agencyId: user.roleEntityId,
       routeId: '',
       price: '',
       pickupPointIds: [],

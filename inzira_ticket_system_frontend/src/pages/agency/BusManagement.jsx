@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Plus, Edit, Trash2, Bus, Save, X } from 'lucide-react'
 import { agencyAPI } from '../../services/api'
+import { useAuth } from '../../contexts/AuthContext'
 import toast from 'react-hot-toast'
 
 const BusManagement = () => {
@@ -9,6 +10,7 @@ const BusManagement = () => {
   const [loading, setLoading] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [editingBus, setEditingBus] = useState(null)
+  const { user } = useAuth()
 
   const [busForm, setBusForm] = useState({
     plateNumber: '',
@@ -19,15 +21,16 @@ const BusManagement = () => {
   })
 
   useEffect(() => {
-    fetchBuses()
-    // For demo purposes, we'll use a hardcoded agency ID
-    // In a real app, this would come from authentication context
+    if (user?.roleEntityId) {
+      fetchBuses()
+    }
   }, [])
 
   const fetchBuses = async () => {
     try {
       setLoading(true)
-      const response = await agencyAPI.getBuses()
+      // Fetch buses for the authenticated agency
+      const response = await agencyAPI.getBusesByAgency(user.roleEntityId)
       setBuses(response.data.data || [])
     } catch (error) {
       toast.error('Failed to fetch buses')
@@ -42,7 +45,7 @@ const BusManagement = () => {
       await agencyAPI.createBus({
         ...busForm,
         capacity: parseInt(busForm.capacity),
-        agency: { id: 1 } // Hardcoded for demo
+        agency: { id: user.roleEntityId }
       })
       toast.success('Bus created successfully')
       resetForm()
