@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Plus, Edit, Trash2, Calendar, Save, X, Clock, Ban } from 'lucide-react'
 import { agencyAPI } from '../../services/api'
+import { useAuth } from '../../contexts/AuthContext'
 import toast from 'react-hot-toast'
 
 const ScheduleManagement = () => {
@@ -11,6 +12,7 @@ const ScheduleManagement = () => {
   const [loading, setLoading] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [editingSchedule, setEditingSchedule] = useState(null)
+  const { user } = useAuth()
 
   const [scheduleForm, setScheduleForm] = useState({
     agencyRoute: { id: '' },
@@ -22,16 +24,19 @@ const ScheduleManagement = () => {
   })
 
   useEffect(() => {
-    fetchSchedules()
-    fetchAgencyRoutes()
-    fetchBuses()
-    fetchDrivers()
+    if (user?.roleEntityId) {
+      fetchSchedules()
+      fetchAgencyRoutes()
+      fetchBuses()
+      fetchDrivers()
+    }
   }, [])
 
   const fetchSchedules = async () => {
     try {
       setLoading(true)
-      const response = await agencyAPI.getSchedules()
+      // Fetch schedules for the authenticated agency
+      const response = await agencyAPI.getSchedulesByAgency(user.roleEntityId)
       setSchedules(response.data.data || [])
     } catch (error) {
       toast.error('Failed to fetch schedules')
@@ -42,7 +47,8 @@ const ScheduleManagement = () => {
 
   const fetchAgencyRoutes = async () => {
     try {
-      const response = await agencyAPI.getAgencyRoutes()
+      // Fetch agency routes for the authenticated agency
+      const response = await agencyAPI.getRoutesByAgency(user.roleEntityId)
       setAgencyRoutes(response.data.data || [])
     } catch (error) {
       toast.error('Failed to fetch agency routes')
@@ -51,7 +57,8 @@ const ScheduleManagement = () => {
 
   const fetchBuses = async () => {
     try {
-      const response = await agencyAPI.getBuses()
+      // Fetch buses for the authenticated agency
+      const response = await agencyAPI.getBusesByAgency(user.roleEntityId)
       setBuses(response.data.data || [])
     } catch (error) {
       toast.error('Failed to fetch buses')
@@ -60,7 +67,8 @@ const ScheduleManagement = () => {
 
   const fetchDrivers = async () => {
     try {
-      const response = await agencyAPI.getDrivers()
+      // Fetch drivers for the authenticated agency
+      const response = await agencyAPI.getDriversByAgency(user.roleEntityId)
       setDrivers(response.data.data || [])
     } catch (error) {
       toast.error('Failed to fetch drivers')
