@@ -17,6 +17,10 @@ import AgencyManagement from './pages/admin/AgencyManagement'
 
 // Agency pages
 import AgencyDashboard from './pages/agency/AgencyDashboard'
+import AgencyProfile from './pages/agency/AgencyProfile'
+import BranchOfficeManagement from './pages/agency/BranchOfficeManagement'
+import AgentManagement from './pages/agency/AgentManagement'
+import AgencyBookingHistory from './pages/agency/AgencyBookingHistory'
 import BusManagement from './pages/agency/BusManagement'
 import DriverManagement from './pages/agency/DriverManagement'
 import ScheduleManagement from './pages/agency/ScheduleManagement'
@@ -66,6 +70,26 @@ function App() {
               <Route path="/agency" element={
                 <ProtectedRoute requiredRole="AGENCY">
                   <AgencyDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/agency/profile" element={
+                <ProtectedRoute requiredRole="AGENCY">
+                  <AgencyProfile />
+                </ProtectedRoute>
+              } />
+              <Route path="/agency/branch-offices" element={
+                <ProtectedRoute requiredRole="AGENCY">
+                  <BranchOfficeManagement />
+                </ProtectedRoute>
+              } />
+              <Route path="/agency/agents" element={
+                <ProtectedRoute requiredRole="AGENCY">
+                  <AgentManagement />
+                </ProtectedRoute>
+              } />
+              <Route path="/agency/booking-history" element={
+                <ProtectedRoute requiredRole="AGENCY">
+                  <AgencyBookingHistory />
                 </ProtectedRoute>
               } />
               <Route path="/agency/buses" element={
