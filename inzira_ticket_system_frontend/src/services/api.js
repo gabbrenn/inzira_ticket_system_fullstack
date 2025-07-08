@@ -145,6 +145,42 @@ export const agencyAPI = {
   cancelSchedule: (id) => api.put(`/agency/schedules/${id}/cancel`),
   deleteSchedule: (id) => api.delete(`/agency/schedules/${id}`),
   
+  // Agency profile management
+  getProfile: (agencyId) => api.get(`/agency/profile/${agencyId}`),
+  updateProfile: (agencyId, formData) => {
+    const config = {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    }
+    return api.put(`/agency/profile/${agencyId}`, formData, config)
+  },
+  
+  // Branch office management
+  createBranchOffice: (data) => api.post('/agency/branch-offices', data),
+  getBranchOffices: () => api.get('/agency/branch-offices'),
+  getBranchOffice: (id) => api.get(`/agency/branch-offices/${id}`),
+  getBranchOfficesByAgency: (agencyId) => api.get(`/agency/branch-offices/agency/${agencyId}`),
+  getActiveBranchOfficesByAgency: (agencyId) => api.get(`/agency/branch-offices/agency/${agencyId}/active`),
+  updateBranchOffice: (id, data) => api.put(`/agency/branch-offices/${id}`, data),
+  deleteBranchOffice: (id) => api.delete(`/agency/branch-offices/${id}`),
+  
+  // Agent management
+  createAgent: (data) => api.post('/agency/agents', data),
+  getAgents: () => api.get('/agency/agents'),
+  getAgent: (id) => api.get(`/agency/agents/${id}`),
+  getAgentsByAgency: (agencyId) => api.get(`/agency/agents/agency/${agencyId}`),
+  getAgentsByBranchOffice: (branchOfficeId) => api.get(`/agency/agents/branch-office/${branchOfficeId}`),
+  getActiveAgentsByAgency: (agencyId) => api.get(`/agency/agents/agency/${agencyId}/active`),
+  updateAgent: (id, data) => api.put(`/agency/agents/${id}`, data),
+  resetAgentPassword: (id) => api.post(`/agency/agents/${id}/reset-password`),
+  deleteAgent: (id) => api.delete(`/agency/agents/${id}`),
+  
+  // Agency metrics
+  getMetrics: (agencyId) => api.get(`/agency/metrics/${agencyId}`),
+  
+  // Agency booking history
+  getBookingsByAgency: (agencyId) => api.get(`/agency/bookings/agency/${agencyId}`),
+  getBookingsBySchedule: (scheduleId) => api.get(`/agency/bookings/schedule/${scheduleId}`),
+  
   // Shared access
   getDistricts: () => sharedAPI.getDistricts(),
   getRoutePoints: (districtId) => sharedAPI.getRoutePoints(districtId),
