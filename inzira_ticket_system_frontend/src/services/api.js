@@ -213,4 +213,53 @@ export const customerAPI = {
   searchSchedules: (params) => sharedAPI.searchSchedules(params),
 }
 
+// Branch Manager APIs
+export const branchManagerAPI = {
+  // Branch manager management
+  createBranchManager: (data) => api.post('/agency/branch-managers', data),
+  getBranchManagers: () => api.get('/agency/branch-managers'),
+  getBranchManager: (id) => api.get(`/agency/branch-managers/${id}`),
+  getBranchManagersByAgency: (agencyId) => api.get(`/agency/branch-managers/agency/${agencyId}`),
+  getBranchManagerByBranchOffice: (branchOfficeId) => api.get(`/agency/branch-managers/branch-office/${branchOfficeId}`),
+  getActiveBranchManagersByAgency: (agencyId) => api.get(`/agency/branch-managers/agency/${agencyId}/active`),
+  updateBranchManager: (id, data) => api.put(`/agency/branch-managers/${id}`, data),
+  resetBranchManagerPassword: (id) => api.post(`/agency/branch-managers/${id}/reset-password`),
+  deleteBranchManager: (id) => api.delete(`/agency/branch-managers/${id}`),
+  
+  // Branch manager metrics and reports
+  getMetrics: (branchManagerId) => api.get(`/branch-manager/metrics/${branchManagerId}`),
+  getSchedules: (branchManagerId) => api.get(`/branch-manager/metrics/${branchManagerId}/schedules`),
+  getBookingsBySchedule: (scheduleId) => api.get(`/branch-manager/metrics/bookings/schedule/${scheduleId}`),
+  
+  // Agent management by branch manager
+  createAgent: (data) => api.post('/agency/agents', data),
+  getAgentsByBranchManager: (branchManagerId) => {
+    // This would need to be implemented in the backend to filter agents by branch manager's branch office
+    return api.get(`/agency/agents/branch-office/${branchManagerId}`)
+  },
+  updateAgent: (id, data) => api.put(`/agency/agents/${id}`, data),
+  resetAgentPassword: (id) => api.post(`/agency/agents/${id}/reset-password`),
+  deleteAgent: (id) => api.delete(`/agency/agents/${id}`),
+  
+  // Schedule management by branch manager
+  createSchedule: (data) => api.post('/agency/schedules', data),
+  updateSchedule: (id, data) => api.put(`/agency/schedules/${id}`, data),
+  cancelSchedule: (id) => api.put(`/agency/schedules/${id}/cancel`),
+  deleteSchedule: (id) => api.delete(`/agency/schedules/${id}`),
+  
+  // Access to agency resources
+  getAgencyRoutes: (branchManagerId) => {
+    // This would need to be implemented to get routes for the branch manager's agency
+    return api.get('/agency/routes')
+  },
+  getBuses: (branchManagerId) => {
+    // This would need to be implemented to get buses for the branch manager's agency
+    return api.get('/agency/buses')
+  },
+  getDrivers: (branchManagerId) => {
+    // This would need to be implemented to get drivers for the branch manager's agency
+    return api.get('/agency/drivers')
+  },
+}
+
 export default api

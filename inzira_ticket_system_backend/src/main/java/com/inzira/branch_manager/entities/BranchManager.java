@@ -1,30 +1,22 @@
-package com.inzira.shared.entities;
+package com.inzira.branch_manager.entities;
 
 import java.time.LocalDateTime;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import com.inzira.agency.entities.Agency;
+import com.inzira.agency.entities.BranchOffice;
+
 import jakarta.persistence.*;
 import lombok.Data;
 
 @Entity
 @Data
-@Table(name = "users")
-public class User {
+public class BranchManager {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(nullable = false, unique = true)
-    private String email;
-
-    @Column(nullable = false)
-    private String password;
-
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private UserRole role;
 
     @Column(nullable = false)
     private String firstName;
@@ -32,14 +24,25 @@ public class User {
     @Column(nullable = false)
     private String lastName;
 
+    @Column(nullable = false, unique = true)
+    private String email;
+
     @Column(nullable = false)
     private String phoneNumber;
 
     @Column(nullable = false)
-    private String status = "ACTIVE"; // ACTIVE, INACTIVE, SUSPENDED
+    private String password;
 
-    // Reference to specific role entity
-    private Long roleEntityId; // Points to Admin, Agency, Customer, or Driver ID
+    @Column(nullable = false)
+    private String status; // ACTIVE, INACTIVE, SUSPENDED
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "agency_id")
+    private Agency agency;
+
+    @OneToOne(optional = false)
+    @JoinColumn(name = "branch_office_id")
+    private BranchOffice branchOffice;
 
     @CreationTimestamp
     @Column(updatable = false)
@@ -48,9 +51,5 @@ public class User {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    public User() {}
-
-    public enum UserRole {
-        ADMIN, AGENCY, CUSTOMER, DRIVER, BRANCH_MANAGER
-    }
+    public BranchManager() {}
 }

@@ -67,6 +67,7 @@ public class AgentService {
         agent.setAgency(agency);
         agent.setBranchOffice(branchOffice);
         agent.setStatus("ACTIVE"); // Default status
+        agent.setConfirmedByAgency(false); // Default to unconfirmed
         
         Agent savedAgent = agentRepository.save(agent);
 
@@ -83,6 +84,14 @@ public class AgentService {
         userRepository.save(user);
 
         return savedAgent;
+    }
+
+    public Agent confirmAgent(Long agentId) {
+        Agent agent = agentRepository.findById(agentId)
+            .orElseThrow(() -> new ResourceNotFoundException("Agent not found with ID: " + agentId));
+        
+        agent.setConfirmedByAgency(true);
+        return agentRepository.save(agent);
     }
 
     public List<Agent> getAllAgents() {

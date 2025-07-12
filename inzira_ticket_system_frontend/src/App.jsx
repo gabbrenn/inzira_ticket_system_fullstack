@@ -31,6 +31,12 @@ import CustomerDashboard from './pages/customer/CustomerDashboard'
 import BookingManagement from './pages/customer/BookingManagement'
 import SearchSchedules from './pages/customer/SearchSchedules'
 
+// Branch Manager pages
+import BranchManagerDashboard from './pages/branch_manager/BranchManagerDashboard'
+import BranchManagerAgentManagement from './pages/branch_manager/BranchManagerAgentManagement'
+import BranchManagerScheduleManagement from './pages/branch_manager/BranchManagerScheduleManagement'
+import BranchManagerReports from './pages/branch_manager/BranchManagerReports'
+
 function App() {
   return (
     <AuthProvider>
@@ -110,6 +116,28 @@ function App() {
               <Route path="/agency/schedules" element={
                 <ProtectedRoute requiredRole="AGENCY">
                   <ScheduleManagement />
+                </ProtectedRoute>
+              } />
+              
+              {/* Branch Manager Routes */}
+              <Route path="/branch-manager" element={
+                <ProtectedRoute requiredRole="BRANCH_MANAGER">
+                  <BranchManagerDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/branch-manager/agents" element={
+                <ProtectedRoute requiredRole="BRANCH_MANAGER">
+                  <BranchManagerAgentManagement />
+                </ProtectedRoute>
+              } />
+              <Route path="/branch-manager/schedules" element={
+                <ProtectedRoute requiredRole="BRANCH_MANAGER">
+                  <BranchManagerScheduleManagement />
+                </ProtectedRoute>
+              } />
+              <Route path="/branch-manager/reports" element={
+                <ProtectedRoute requiredRole="BRANCH_MANAGER">
+                  <BranchManagerReports />
                 </ProtectedRoute>
               } />
               

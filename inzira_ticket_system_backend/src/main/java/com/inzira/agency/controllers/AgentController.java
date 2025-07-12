@@ -71,6 +71,12 @@ public class AgentController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Password reset successfully", newPassword));
     }
 
+    @PostMapping("/{id}/confirm")
+    public ResponseEntity<ApiResponse<Agent>> confirmAgent(@PathVariable Long id) {
+        Agent confirmedAgent = agentService.confirmAgent(id);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Agent confirmed successfully", confirmedAgent));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteAgent(@PathVariable Long id) {
         agentService.deleteAgent(id);

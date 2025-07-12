@@ -93,6 +93,8 @@ public class AuthService {
                 customer = customerRepository.save(customer);
                 roleEntityId = customer.getId();
                 System.out.println("Created customer with ID: " + roleEntityId);
+            } else if (request.getRole().equals("BRANCH_MANAGER")) {
+                throw new IllegalArgumentException("Branch managers cannot self-register. Contact your agency administrator.");
             }
 
             // Create user entity
