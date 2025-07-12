@@ -55,6 +55,9 @@ public class SecurityConfig {
                 // Agency endpoints  
                 .requestMatchers("/api/agency/**").hasRole("AGENCY")
                 
+                // Branch Manager endpoints
+                .requestMatchers("/api/branch-manager/**").hasRole("BRANCH_MANAGER")
+                
                 // Customer endpoints
                 .requestMatchers("/api/customers/**").hasAnyRole("CUSTOMER", "ADMIN")
                 .requestMatchers("/api/bookings/**").hasAnyRole("CUSTOMER", "ADMIN", "AGENCY")

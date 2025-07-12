@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react'
-import { Plus, Edit, Trash2, Users, Save, X, Key, Building2, CheckCircle } from 'lucide-react'
-import { agencyAPI } from '../../services/api'
+import { Plus, Edit, Trash2, Users, Save, X, Key, Building2, CheckCircle, Clock } from 'lucide-react'
+import { branchManagerAPI } from '../../services/api'
 import { useAuth } from '../../contexts/AuthContext'
 import toast from 'react-hot-toast'
 
-const AgentManagement = () => {
+const BranchManagerAgentManagement = () => {
   const [agents, setAgents] = useState([])
-  const [branchOffices, setBranchOffices] = useState([])
+  const [branchOffice, setBranchOffice] = useState(null)
   const [loading, setLoading] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [editingAgent, setEditingAgent] = useState(null)
@@ -25,15 +25,32 @@ const AgentManagement = () => {
 
   useEffect(() => {
     if (user?.roleEntityId) {
+      fetchBranchManagerInfo()
       fetchAgents()
-      fetchBranchOffices()
     }
   }, [user])
+
+  const fetchBranchManagerInfo = async () => {
+    try {
+      const response = await branchManagerAPI.getBranchManager(user.roleEntityId)
+      const branchManagerData = response.data.data
+      setBranchOffice(branchManagerData.branchOffice)
+      
+      // Set default values for agent form
+      setAgentForm(prev => ({
+        ...prev,
+        agency: { id: branchManagerData.agency.id },
+        branchOffice: { id: branchManagerData.branchOffice.id }
+      }))
+    } catch (error) {
+      toast.error('Failed to fetch branch manager information')
+    }
+  }
 
   const fetchAgents = async () => {
     try {
       setLoading(true)
-      const response = await agencyAPI.getAgentsByAgency(user.roleEntityId)
+      const response = await branchManagerAPI.getAgentsByBranchManager(user.roleEntityId)
       setAgents(response.data.data || [])
     } catch (error) {
       toast.error('Failed to fetch agents')
@@ -42,23 +59,11 @@ const AgentManagement = () => {
     }
   }
 
-  const fetchBranchOffices = async () => {
-    try {
-      const response = await agencyAPI.getBranchOfficesByAgency(user.roleEntityId)
-      setBranchOffices(response.data.data || [])
-    } catch (error) {
-      toast.error('Failed to fetch branch offices')
-    }
-  }
-
   const handleCreateAgent = async (e) => {
     e.preventDefault()
     try {
-      await agencyAPI.createAgent({
-        ...agentForm,
-        agency: { id: user.roleEntityId }
-      })
-      toast.success('Agent created successfully')
+      await branchManagerAPI.createAgent(agentForm)
+      toast.success('Agent created successfully. Waiting for agency confirmation.')
       resetForm()
       fetchAgents()
     } catch (error) {
@@ -69,7 +74,7 @@ const AgentManagement = () => {
   const handleUpdateAgent = async (e) => {
     e.preventDefault()
     try {
-      await agencyAPI.updateAgent(editingAgent.id, agentForm)
+      await branchManagerAPI.updateAgent(editingAgent.id, agentForm)
       toast.success('Agent updated successfully')
       resetForm()
       fetchAgents()
@@ -81,7 +86,7 @@ const AgentManagement = () => {
   const handleDeleteAgent = async (id) => {
     if (window.confirm('Are you sure you want to delete this agent?')) {
       try {
-        await agencyAPI.deleteAgent(id)
+        await branchManagerAPI.deleteAgent(id)
         toast.success('Agent deleted successfully')
         fetchAgents()
       } catch (error) {
@@ -93,23 +98,13 @@ const AgentManagement = () => {
   const handleResetPassword = async (id) => {
     if (window.confirm('Are you sure you want to reset this agent\'s password?')) {
       try {
-        const response = await agencyAPI.resetAgentPassword(id)
+        const response = await branchManagerAPI.resetAgentPassword(id)
         const newPassword = response.data.data
         setShowPassword(prev => ({ ...prev, [id]: newPassword }))
         toast.success('Password reset successfully')
       } catch (error) {
         toast.error(error.response?.data?.message || 'Failed to reset password')
       }
-    }
-  }
-
-  const handleConfirmAgent = async (agentId) => {
-    try {
-      await agencyAPI.confirmAgent(agentId)
-      toast.success('Agent confirmed successfully')
-      fetchAgents()
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to confirm agent')
     }
   }
 
@@ -134,8 +129,8 @@ const AgentManagement = () => {
       email: '',
       phoneNumber: '',
       status: 'ACTIVE',
-      agency: { id: '' },
-      branchOffice: { id: '' }
+      agency: { id: branchOffice?.agency?.id || '' },
+      branchOffice: { id: branchOffice?.id || '' }
     })
     setShowForm(false)
     setEditingAgent(null)
@@ -155,19 +150,33 @@ const AgentManagement = () => {
     }
   }
 
+  const getConfirmationBadge = (confirmed) => {
+    const baseClasses = "px-2 py-1 text-xs font-medium rounded-full"
+    if (confirmed) {
+      return `${baseClasses} bg-green-100 text-green-800`
+    } else {
+      return `${baseClasses} bg-yellow-100 text-yellow-800`
+    }
+  }
+
   return (
     <div className="px-4 sm:px-6 lg:px-8 fade-in">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Agent Management</h1>
         <p className="mt-2 text-gray-600">
-          Manage agents working in your branch offices
+          Manage agents in your branch office
         </p>
+        {branchOffice && (
+          <div className="mt-2 text-sm text-gray-500">
+            <span className="font-medium">{branchOffice.officeName}</span>
+          </div>
+        )}
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         <div className="p-6 border-b border-gray-200">
           <div className="flex justify-between items-center">
-            <h2 className="text-lg font-semibold text-gray-900">All Agents</h2>
+            <h2 className="text-lg font-semibold text-gray-900">Branch Agents</h2>
             <button
               onClick={() => setShowForm(true)}
               className="btn-primary"
@@ -194,32 +203,30 @@ const AgentManagement = () => {
                 <div key={agent.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
                   <div className="flex items-start justify-between mb-4">
                     <div>
-                      <h3 className="font-semibold text-gray-900">
+                      <h3 className="font-semibold text-gray-900 mb-2">
                         {agent.firstName} {agent.lastName}
                       </h3>
-                      <span className={getStatusBadge(agent.status)}>
-                        {agent.status}
-                      </span>
+                      <div className="space-y-1">
+                        <span className={getStatusBadge(agent.status)}>
+                          {agent.status}
+                        </span>
+                        <div className="flex items-center">
+                          {agent.confirmedByAgency ? (
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                          ) : (
+                            <Clock className="h-3 w-3 mr-1" />
+                          )}
+                          <span className={getConfirmationBadge(agent.confirmedByAgency)}>
+                            {agent.confirmedByAgency ? 'Confirmed' : 'Pending'}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
                   <div className="space-y-2 text-sm text-gray-600 mb-4">
                     <p><strong>Email:</strong> {agent.email}</p>
                     <p><strong>Phone:</strong> {agent.phoneNumber}</p>
-                    <div className="flex items-center">
-                      <span className="font-medium">Status:</span>
-                      <span className={`ml-2 px-2 py-1 text-xs rounded-full ${
-                        agent.confirmedByAgency 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {agent.confirmedByAgency ? 'Confirmed' : 'Pending Confirmation'}
-                      </span>
-                    </div>
-                    <div className="flex items-center">
-                      <Building2 className="h-3 w-3 mr-1" />
-                      <span>{agent.branchOffice.officeName}</span>
-                    </div>
                     <p><strong>Joined:</strong> {new Date(agent.createdAt).toLocaleDateString()}</p>
                   </div>
 
@@ -237,18 +244,9 @@ const AgentManagement = () => {
                   )}
 
                   <div className="flex space-x-2">
-                    {!agent.confirmedByAgency && (
-                      <button
-                        onClick={() => handleConfirmAgent(agent.id)}
-                        className="flex-1 btn-primary text-sm py-2"
-                      >
-                        <CheckCircle className="h-3 w-3 mr-1" />
-                        Confirm
-                      </button>
-                    )}
                     <button
                       onClick={() => startEditAgent(agent)}
-                      className={`${!agent.confirmedByAgency ? 'flex-1' : 'flex-1'} btn-secondary text-sm py-2`}
+                      className="flex-1 btn-secondary text-sm py-2"
                     >
                       <Edit className="h-3 w-3 mr-1" />
                       Edit
@@ -348,25 +346,6 @@ const AgentManagement = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Branch Office
-                  </label>
-                  <select
-                    value={agentForm.branchOffice.id}
-                    onChange={(e) => setAgentForm({ ...agentForm, branchOffice: { id: e.target.value } })}
-                    className="input w-full"
-                    required
-                  >
-                    <option value="">Select branch office</option>
-                    {branchOffices.filter(office => office.status === 'ACTIVE').map((office) => (
-                      <option key={office.id} value={office.id}>
-                        {office.officeName}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Status
                   </label>
                   <select
@@ -380,6 +359,14 @@ const AgentManagement = () => {
                     <option value="SUSPENDED">Suspended</option>
                   </select>
                 </div>
+
+                {!editingAgent && (
+                  <div className="p-4 bg-blue-50 rounded-lg">
+                    <p className="text-sm text-blue-800">
+                      <strong>Note:</strong> New agents will need to be confirmed by the agency before they can start working.
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="flex space-x-3 mt-6">
@@ -403,4 +390,4 @@ const AgentManagement = () => {
   )
 }
 
-export default AgentManagement
+export default BranchManagerAgentManagement

@@ -33,6 +33,9 @@ public class Agent {
     @Column(nullable = false)
     private String status; // ACTIVE, INACTIVE, SUSPENDED
 
+    @Column(nullable = false)
+    private Boolean confirmedByAgency = false;
+
     @ManyToOne(optional = false)
     @JoinColumn(name = "agency_id")
     private Agency agency;
