@@ -115,6 +115,11 @@ public class AgentService {
         return agentRepository.findByAgencyIdAndStatus(agencyId, "ACTIVE");
     }
 
+    public List<Agent> getUnconfirmedAgentsByAgency(Long agencyId) {
+        return agentRepository.findByAgencyId(agencyId).stream()
+            .filter(agent -> !agent.getConfirmedByAgency())
+            .toList();
+    }
     public Agent updateAgent(Long id, Agent updatedAgent) {
         Agent existingAgent = agentRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Agent not found with ID: " + id));
