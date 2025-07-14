@@ -12,8 +12,8 @@ import com.inzira.branch_manager.services.BranchManagerService;
 import com.inzira.shared.exceptions.ApiResponse;
 
 @RestController
-@RequestMapping("/api/agency/branch-managers")
-public class BranchManagerController {
+@RequestMapping("/api/agency/branch-managers") 
+public class AgencyBranchManagerController {
 
     @Autowired
     private BranchManagerService branchManagerService;
