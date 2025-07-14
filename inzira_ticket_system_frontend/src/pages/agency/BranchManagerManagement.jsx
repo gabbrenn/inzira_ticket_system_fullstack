@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from 'react'
-import { Plus, Edit, Trash2, Users, Save, X, Key, Building2, CheckCircle } from 'lucide-react'
+import { Plus, Edit, Trash2, Users, Save, X, Key, Building2, UserCheck } from 'lucide-react'
 import { agencyAPI } from '../../services/api'
 import { useAuth } from '../../contexts/AuthContext'
 import toast from 'react-hot-toast'
 
-const AgentManagement = () => {
-  const [agents, setAgents] = useState([])
+const BranchManagerManagement = () => {
+  const [branchManagers, setBranchManagers] = useState([])
   const [branchOffices, setBranchOffices] = useState([])
   const [loading, setLoading] = useState(false)
   const [showForm, setShowForm] = useState(false)
-  const [editingAgent, setEditingAgent] = useState(null)
+  const [editingBranchManager, setEditingBranchManager] = useState(null)
   const [showPassword, setShowPassword] = useState({})
   const { user } = useAuth()
 
-  const [agentForm, setAgentForm] = useState({
+  const [branchManagerForm, setBranchManagerForm] = useState({
     firstName: '',
     lastName: '',
     email: '',
@@ -25,18 +25,18 @@ const AgentManagement = () => {
 
   useEffect(() => {
     if (user?.roleEntityId) {
-      fetchAgents()
+      fetchBranchManagers()
       fetchBranchOffices()
     }
   }, [user])
 
-  const fetchAgents = async () => {
+  const fetchBranchManagers = async () => {
     try {
       setLoading(true)
-      const response = await agencyAPI.getAgentsByAgency(user.roleEntityId)
-      setAgents(response.data.data || [])
+      const response = await agencyAPI.getBranchManagersByAgency(user.roleEntityId)
+      setBranchManagers(response.data.data || [])
     } catch (error) {
-      toast.error('Failed to fetch agents')
+      toast.error('Failed to fetch branch managers')
     } finally {
       setLoading(false)
     }
@@ -51,49 +51,49 @@ const AgentManagement = () => {
     }
   }
 
-  const handleCreateAgent = async (e) => {
+  const handleCreateBranchManager = async (e) => {
     e.preventDefault()
     try {
-      await agencyAPI.createAgent({
-        ...agentForm,
+      await agencyAPI.createBranchManager({
+        ...branchManagerForm,
         agency: { id: user.roleEntityId }
       })
-      toast.success('Agent created successfully')
+      toast.success('Branch manager created successfully')
       resetForm()
-      fetchAgents()
+      fetchBranchManagers()
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to create agent')
+      toast.error(error.response?.data?.message || 'Failed to create branch manager')
     }
   }
 
-  const handleUpdateAgent = async (e) => {
+  const handleUpdateBranchManager = async (e) => {
     e.preventDefault()
     try {
-      await agencyAPI.updateAgent(editingAgent.id, agentForm)
-      toast.success('Agent updated successfully')
+      await agencyAPI.updateBranchManager(editingBranchManager.id, branchManagerForm)
+      toast.success('Branch manager updated successfully')
       resetForm()
-      fetchAgents()
+      fetchBranchManagers()
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to update agent')
+      toast.error(error.response?.data?.message || 'Failed to update branch manager')
     }
   }
 
-  const handleDeleteAgent = async (id) => {
-    if (window.confirm('Are you sure you want to delete this agent?')) {
+  const handleDeleteBranchManager = async (id) => {
+    if (window.confirm('Are you sure you want to delete this branch manager?')) {
       try {
-        await agencyAPI.deleteAgent(id)
-        toast.success('Agent deleted successfully')
-        fetchAgents()
+        await agencyAPI.deleteBranchManager(id)
+        toast.success('Branch manager deleted successfully')
+        fetchBranchManagers()
       } catch (error) {
-        toast.error(error.response?.data?.message || 'Failed to delete agent')
+        toast.error(error.response?.data?.message || 'Failed to delete branch manager')
       }
     }
   }
 
   const handleResetPassword = async (id) => {
-    if (window.confirm('Are you sure you want to reset this agent\'s password?')) {
+    if (window.confirm('Are you sure you want to reset this branch manager\'s password?')) {
       try {
-        const response = await agencyAPI.resetAgentPassword(id)
+        const response = await agencyAPI.resetBranchManagerPassword(id)
         const newPassword = response.data.data
         setShowPassword(prev => ({ ...prev, [id]: newPassword }))
         toast.success('Password reset successfully')
@@ -103,32 +103,22 @@ const AgentManagement = () => {
     }
   }
 
-  const handleConfirmAgent = async (agentId) => {
-    try {
-      await agencyAPI.confirmAgent(agentId)
-      toast.success('Agent confirmed successfully')
-      fetchAgents()
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to confirm agent')
-    }
-  }
-
-  const startEditAgent = (agent) => {
-    setEditingAgent(agent)
-    setAgentForm({
-      firstName: agent.firstName,
-      lastName: agent.lastName,
-      email: agent.email,
-      phoneNumber: agent.phoneNumber,
-      status: agent.status,
-      agency: { id: agent.agency.id.toString() },
-      branchOffice: { id: agent.branchOffice.id.toString() }
+  const startEditBranchManager = (branchManager) => {
+    setEditingBranchManager(branchManager)
+    setBranchManagerForm({
+      firstName: branchManager.firstName,
+      lastName: branchManager.lastName,
+      email: branchManager.email,
+      phoneNumber: branchManager.phoneNumber,
+      status: branchManager.status,
+      agency: { id: branchManager.agency.id.toString() },
+      branchOffice: { id: branchManager.branchOffice.id.toString() }
     })
     setShowForm(true)
   }
 
   const resetForm = () => {
-    setAgentForm({
+    setBranchManagerForm({
       firstName: '',
       lastName: '',
       email: '',
@@ -138,7 +128,7 @@ const AgentManagement = () => {
       branchOffice: { id: '' }
     })
     setShowForm(false)
-    setEditingAgent(null)
+    setEditingBranchManager(null)
   }
 
   const getStatusBadge = (status) => {
@@ -155,27 +145,39 @@ const AgentManagement = () => {
     }
   }
 
+  // Filter out branch offices that already have a manager
+  const availableBranchOffices = branchOffices.filter(office => 
+    !branchManagers.some(manager => manager.branchOffice.id === office.id) ||
+    (editingBranchManager && editingBranchManager.branchOffice.id === office.id)
+  )
+
   return (
     <div className="px-4 sm:px-6 lg:px-8 fade-in">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Agent Management</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Branch Manager Management</h1>
         <p className="mt-2 text-gray-600">
-          Manage agents working in your branch offices
+          Assign managers to your branch offices to oversee operations
         </p>
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         <div className="p-6 border-b border-gray-200">
           <div className="flex justify-between items-center">
-            <h2 className="text-lg font-semibold text-gray-900">All Agents</h2>
+            <h2 className="text-lg font-semibold text-gray-900">Branch Managers</h2>
             <button
               onClick={() => setShowForm(true)}
               className="btn-primary"
+              disabled={availableBranchOffices.length === 0}
             >
               <Plus className="h-4 w-4 mr-2" />
-              Add Agent
+              Add Branch Manager
             </button>
           </div>
+          {availableBranchOffices.length === 0 && !editingBranchManager && (
+            <p className="text-sm text-gray-500 mt-2">
+              All branch offices already have managers assigned.
+            </p>
+          )}
         </div>
 
         <div className="p-6">
@@ -183,52 +185,42 @@ const AgentManagement = () => {
             <div className="text-center py-8">
               <div className="loading-spinner mx-auto"></div>
             </div>
-          ) : agents.length === 0 ? (
+          ) : branchManagers.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <Users className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-              <p>No agents found. Add your first agent to get started.</p>
+              <p>No branch managers found. Assign your first branch manager to get started.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {agents.map((agent) => (
-                <div key={agent.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+              {branchManagers.map((branchManager) => (
+                <div key={branchManager.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
                   <div className="flex items-start justify-between mb-4">
                     <div>
                       <h3 className="font-semibold text-gray-900">
-                        {agent.firstName} {agent.lastName}
+                        {branchManager.firstName} {branchManager.lastName}
                       </h3>
-                      <span className={getStatusBadge(agent.status)}>
-                        {agent.status}
+                      <span className={getStatusBadge(branchManager.status)}>
+                        {branchManager.status}
                       </span>
                     </div>
                   </div>
 
                   <div className="space-y-2 text-sm text-gray-600 mb-4">
-                    <p><strong>Email:</strong> {agent.email}</p>
-                    <p><strong>Phone:</strong> {agent.phoneNumber}</p>
-                    <div className="flex items-center">
-                      <span className="font-medium">Status:</span>
-                      <span className={`ml-2 px-2 py-1 text-xs rounded-full ${
-                        agent.confirmedByAgency 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {agent.confirmedByAgency ? 'Confirmed' : 'Pending Confirmation'}
-                      </span>
-                    </div>
+                    <p><strong>Email:</strong> {branchManager.email}</p>
+                    <p><strong>Phone:</strong> {branchManager.phoneNumber}</p>
                     <div className="flex items-center">
                       <Building2 className="h-3 w-3 mr-1" />
-                      <span>{agent.branchOffice.officeName}</span>
+                      <span>{branchManager.branchOffice.officeName}</span>
                     </div>
-                    <p><strong>Joined:</strong> {new Date(agent.createdAt).toLocaleDateString()}</p>
+                    <p><strong>Created:</strong> {new Date(branchManager.createdAt).toLocaleDateString()}</p>
                   </div>
 
-                  {showPassword[agent.id] && (
+                  {showPassword[branchManager.id] && (
                     <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                       <p className="text-sm font-medium text-yellow-800">New Password:</p>
-                      <p className="text-sm text-yellow-700 font-mono">{showPassword[agent.id]}</p>
+                      <p className="text-sm text-yellow-700 font-mono">{showPassword[branchManager.id]}</p>
                       <button
-                        onClick={() => setShowPassword(prev => ({ ...prev, [agent.id]: null }))}
+                        onClick={() => setShowPassword(prev => ({ ...prev, [branchManager.id]: null }))}
                         className="text-xs text-yellow-600 hover:text-yellow-800 mt-1"
                       >
                         Hide
@@ -237,36 +229,22 @@ const AgentManagement = () => {
                   )}
 
                   <div className="flex space-x-2">
-                    {!agent.confirmedByAgency && (
-                      <button
-                        onClick={() => agencyAPI.confirmAgent(agent.id).then(() => {
-                          toast.success('Agent confirmed successfully')
-                          fetchAgents()
-                        }).catch(error => {
-                          toast.error(error.response?.data?.message || 'Failed to confirm agent')
-                        })}
-                        className="flex-1 btn-primary text-sm py-2"
-                      >
-                        <CheckCircle className="h-3 w-3 mr-1" />
-                        Confirm
-                      </button>
-                    )}
                     <button
-                      onClick={() => startEditAgent(agent)}
-                      className={`${!agent.confirmedByAgency ? 'flex-1' : 'flex-1'} btn-secondary text-sm py-2`}
+                      onClick={() => startEditBranchManager(branchManager)}
+                      className="flex-1 btn-secondary text-sm py-2"
                     >
                       <Edit className="h-3 w-3 mr-1" />
                       Edit
                     </button>
                     <button
-                      onClick={() => handleResetPassword(agent.id)}
+                      onClick={() => handleResetPassword(branchManager.id)}
                       className="flex-1 btn-outline text-sm py-2"
                     >
                       <Key className="h-3 w-3 mr-1" />
                       Reset
                     </button>
                     <button
-                      onClick={() => handleDeleteAgent(agent.id)}
+                      onClick={() => handleDeleteBranchManager(branchManager.id)}
                       className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-md"
                     >
                       <Trash2 className="h-3 w-3" />
@@ -279,13 +257,13 @@ const AgentManagement = () => {
         </div>
       </div>
 
-      {/* Agent Form Modal */}
+      {/* Branch Manager Form Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">
-                {editingAgent ? 'Edit Agent' : 'Add New Agent'}
+                {editingBranchManager ? 'Edit Branch Manager' : 'Add New Branch Manager'}
               </h3>
               <button
                 onClick={resetForm}
@@ -295,7 +273,7 @@ const AgentManagement = () => {
               </button>
             </div>
 
-            <form onSubmit={editingAgent ? handleUpdateAgent : handleCreateAgent}>
+            <form onSubmit={editingBranchManager ? handleUpdateBranchManager : handleCreateBranchManager}>
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -304,8 +282,8 @@ const AgentManagement = () => {
                     </label>
                     <input
                       type="text"
-                      value={agentForm.firstName}
-                      onChange={(e) => setAgentForm({ ...agentForm, firstName: e.target.value })}
+                      value={branchManagerForm.firstName}
+                      onChange={(e) => setBranchManagerForm({ ...branchManagerForm, firstName: e.target.value })}
                       className="input w-full"
                       required
                     />
@@ -316,8 +294,8 @@ const AgentManagement = () => {
                     </label>
                     <input
                       type="text"
-                      value={agentForm.lastName}
-                      onChange={(e) => setAgentForm({ ...agentForm, lastName: e.target.value })}
+                      value={branchManagerForm.lastName}
+                      onChange={(e) => setBranchManagerForm({ ...branchManagerForm, lastName: e.target.value })}
                       className="input w-full"
                       required
                     />
@@ -330,11 +308,11 @@ const AgentManagement = () => {
                   </label>
                   <input
                     type="email"
-                    value={agentForm.email}
-                    onChange={(e) => setAgentForm({ ...agentForm, email: e.target.value })}
+                    value={branchManagerForm.email}
+                    onChange={(e) => setBranchManagerForm({ ...branchManagerForm, email: e.target.value })}
                     className="input w-full"
                     required
-                    disabled={editingAgent} // Email shouldn't be editable
+                    disabled={editingBranchManager} // Email shouldn't be editable
                   />
                 </div>
 
@@ -344,8 +322,8 @@ const AgentManagement = () => {
                   </label>
                   <input
                     type="tel"
-                    value={agentForm.phoneNumber}
-                    onChange={(e) => setAgentForm({ ...agentForm, phoneNumber: e.target.value })}
+                    value={branchManagerForm.phoneNumber}
+                    onChange={(e) => setBranchManagerForm({ ...branchManagerForm, phoneNumber: e.target.value })}
                     className="input w-full"
                     required
                   />
@@ -356,18 +334,23 @@ const AgentManagement = () => {
                     Branch Office
                   </label>
                   <select
-                    value={agentForm.branchOffice.id}
-                    onChange={(e) => setAgentForm({ ...agentForm, branchOffice: { id: e.target.value } })}
+                    value={branchManagerForm.branchOffice.id}
+                    onChange={(e) => setBranchManagerForm({ ...branchManagerForm, branchOffice: { id: e.target.value } })}
                     className="input w-full"
                     required
                   >
                     <option value="">Select branch office</option>
-                    {branchOffices.filter(office => office.status === 'ACTIVE').map((office) => (
+                    {availableBranchOffices.filter(office => office.status === 'ACTIVE').map((office) => (
                       <option key={office.id} value={office.id}>
-                        {office.officeName}
+                        {office.officeName} - {office.address}
                       </option>
                     ))}
                   </select>
+                  {!editingBranchManager && availableBranchOffices.length === 0 && (
+                    <p className="text-sm text-red-600 mt-1">
+                      All branch offices already have managers. Create a new branch office first.
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -375,8 +358,8 @@ const AgentManagement = () => {
                     Status
                   </label>
                   <select
-                    value={agentForm.status}
-                    onChange={(e) => setAgentForm({ ...agentForm, status: e.target.value })}
+                    value={branchManagerForm.status}
+                    onChange={(e) => setBranchManagerForm({ ...branchManagerForm, status: e.target.value })}
                     className="input w-full"
                     required
                   >
@@ -390,7 +373,7 @@ const AgentManagement = () => {
               <div className="flex space-x-3 mt-6">
                 <button type="submit" className="btn-primary flex-1">
                   <Save className="h-4 w-4 mr-2" />
-                  {editingAgent ? 'Update' : 'Create'}
+                  {editingBranchManager ? 'Update' : 'Create'}
                 </button>
                 <button
                   type="button"
@@ -408,4 +391,4 @@ const AgentManagement = () => {
   )
 }
 
-export default AgentManagement
+export default BranchManagerManagement

@@ -170,6 +170,8 @@ export const agencyAPI = {
   getAgentsByAgency: (agencyId) => api.get(`/agency/agents/agency/${agencyId}`),
   getAgentsByBranchOffice: (branchOfficeId) => api.get(`/agency/agents/branch-office/${branchOfficeId}`),
   getActiveAgentsByAgency: (agencyId) => api.get(`/agency/agents/agency/${agencyId}/active`),
+  getUnconfirmedAgentsByAgency: (agencyId) => api.get(`/agency/agents/unconfirmed/agency/${agencyId}`),
+  confirmAgent: (id) => api.post(`/agency/agents/${id}/confirm`),
   updateAgent: (id, data) => api.put(`/agency/agents/${id}`, data),
   resetAgentPassword: (id) => api.post(`/agency/agents/${id}/reset-password`),
   deleteAgent: (id) => api.delete(`/agency/agents/${id}`),
@@ -181,6 +183,17 @@ export const agencyAPI = {
   getBookingsByAgency: (agencyId) => api.get(`/agency/bookings/agency/${agencyId}`),
   getBookingsBySchedule: (scheduleId) => api.get(`/agency/bookings/schedule/${scheduleId}`),
   
+  // Branch manager management
+  createBranchManager: (data) => api.post('/agency/branch-managers', data),
+  getBranchManagers: () => api.get('/agency/branch-managers'),
+  getBranchManager: (id) => api.get(`/agency/branch-managers/${id}`),
+  getBranchManagersByAgency: (agencyId) => api.get(`/agency/branch-managers/agency/${agencyId}`),
+  getBranchManagerByBranchOffice: (branchOfficeId) => api.get(`/agency/branch-managers/branch-office/${branchOfficeId}`),
+  getActiveBranchManagersByAgency: (agencyId) => api.get(`/agency/branch-managers/agency/${agencyId}/active`),
+  updateBranchManager: (id, data) => api.put(`/agency/branch-managers/${id}`, data),
+  resetBranchManagerPassword: (id) => api.post(`/agency/branch-managers/${id}/reset-password`),
+  deleteBranchManager: (id) => api.delete(`/agency/branch-managers/${id}`),
+
   // Shared access
   getDistricts: () => sharedAPI.getDistricts(),
   getRoutePoints: (districtId) => sharedAPI.getRoutePoints(districtId),
@@ -211,6 +224,12 @@ export const customerAPI = {
   getDistricts: () => sharedAPI.getDistricts(),
   getRoutePoints: (districtId) => sharedAPI.getRoutePoints(districtId),
   searchSchedules: (params) => sharedAPI.searchSchedules(params),
+  
+  // Agent booking functionality
+  createAgentBooking: (data) => api.post('/agent/bookings', data),
+  getBookingsByAgent: (agentId) => api.get(`/agent/bookings/agent/${agentId}`),
+  confirmAgentBooking: (id) => api.put(`/agent/bookings/${id}/confirm`),
+  cancelAgentBooking: (id) => api.put(`/agent/bookings/${id}/cancel`),
 }
 
 // Branch Manager APIs

@@ -1,7 +1,7 @@
 import React from 'react'
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Bus, Users, Route, Calendar, Plus, BarChart3, Building2, UserCheck, User } from 'lucide-react'
+import { Bus, Users, Route, Calendar, Plus, BarChart3, Building2, UserCheck, User, Crown } from 'lucide-react'
 import { agencyAPI } from '../../services/api'
 import { useAuth } from '../../contexts/AuthContext'
 import toast from 'react-hot-toast'
@@ -54,6 +54,14 @@ const AgencyDashboard = () => {
       icon: UserCheck,
       color: 'bg-pink-500',
       actions: ['Add Agents', 'Assign Offices', 'Reset Passwords']
+    },
+    {
+      title: 'Branch Managers',
+      description: 'Assign managers to oversee branch operations',
+      link: '/agency/branch-managers',
+      icon: Crown,
+      color: 'bg-indigo-500',
+      actions: ['Assign Managers', 'Manage Access', 'Reset Passwords']
     },
     {
       title: 'Bus Management',

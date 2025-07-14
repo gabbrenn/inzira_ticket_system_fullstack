@@ -77,6 +77,12 @@ public class AgentController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Agent confirmed successfully", confirmedAgent));
     }
 
+    @GetMapping("/unconfirmed/agency/{agencyId}")
+    public ResponseEntity<ApiResponse<List<Agent>>> getUnconfirmedAgentsByAgency(@PathVariable Long agencyId) {
+        List<Agent> agents = agentService.getUnconfirmedAgentsByAgency(agencyId);
+        String message = agents.isEmpty() ? "No unconfirmed agents found for this agency" : "Unconfirmed agency agents retrieved successfully";
+        return ResponseEntity.ok(new ApiResponse<>(true, message, agents));
+    }
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteAgent(@PathVariable Long id) {
         agentService.deleteAgent(id);
