@@ -252,33 +252,43 @@ export const branchManagerAPI = {
   
   // Agent management by branch manager
   createAgent: (data) => api.post('/agency/agents', data),
-  getAgentsByBranchManager: (branchManagerId) => {
-    // This would need to be implemented in the backend to filter agents by branch manager's branch office
-    return api.get(`/agency/agents/branch-office/${branchManagerId}`)
-  },
+  getAgentsByBranchManager: (branchOfficeId) => api.get(`/agency/agents/branch-office/${branchOfficeId}`),
   updateAgent: (id, data) => api.put(`/agency/agents/${id}`, data),
   resetAgentPassword: (id) => api.post(`/agency/agents/${id}/reset-password`),
   deleteAgent: (id) => api.delete(`/agency/agents/${id}`),
   
   // Schedule management by branch manager
   createSchedule: (data) => api.post('/agency/schedules', data),
+  getSchedulesByBranchManager: (branchManagerId) => api.get(`/branch-manager/metrics/${branchManagerId}/schedules`),
   updateSchedule: (id, data) => api.put(`/agency/schedules/${id}`, data),
   cancelSchedule: (id) => api.put(`/agency/schedules/${id}/cancel`),
   deleteSchedule: (id) => api.delete(`/agency/schedules/${id}`),
   
   // Access to agency resources
-  getAgencyRoutes: (branchManagerId) => {
-    // This would need to be implemented to get routes for the branch manager's agency
-    return api.get('/agency/routes')
-  },
-  getBuses: (branchManagerId) => {
-    // This would need to be implemented to get buses for the branch manager's agency
-    return api.get('/agency/buses')
-  },
-  getDrivers: (branchManagerId) => {
-    // This would need to be implemented to get drivers for the branch manager's agency
-    return api.get('/agency/drivers')
-  },
+  getAgencyRoutes: () => api.get('/agency/routes'),
+  getBuses: () => api.get('/agency/buses'),
+  getDrivers: () => api.get('/agency/drivers'),
+}
+
+// Agent APIs
+export const agentAPI = {
+  // Agent booking functionality
+  createBooking: (data) => api.post('/agent/bookings', data),
+  getBookings: () => api.get('/agent/bookings'),
+  getBookingsByAgent: (agentId) => api.get(`/agent/bookings/agent/${agentId}`),
+  confirmBooking: (id) => api.put(`/agent/bookings/${id}/confirm`),
+  cancelBooking: (id) => api.put(`/agent/bookings/${id}/cancel`),
+  
+  // Agent profile
+  getProfile: (agentId) => api.get(`/agent/profile/${agentId}`),
+  updateProfile: (agentId, data) => api.put(`/agent/profile/${agentId}`, data),
+  
+  // Access to schedules for booking
+  searchSchedules: (params) => api.get('/agency/schedules/search', { params }),
+  
+  // Access to districts and route points
+  getDistricts: () => sharedAPI.getDistricts(),
+  getRoutePoints: (districtId) => sharedAPI.getRoutePoints(districtId),
 }
 
 export default api

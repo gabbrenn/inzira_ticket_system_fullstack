@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Bus, Users, MapPin, Calendar, User, Home, Settings, LogOut,Building2  } from 'lucide-react'
+import { Bus, Users, MapPin, Calendar, User, Home, Settings, LogOut, Building2, UserCheck } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import toast from 'react-hot-toast'
 
@@ -13,6 +13,8 @@ const Layout = ({ children }) => {
     { name: 'Home', href: '/', icon: Home, public: true },
     { name: 'Admin Panel', href: '/admin', icon: Settings, role: 'ADMIN' },
     { name: 'Agency Panel', href: '/agency', icon: Bus, role: 'AGENCY' },
+    { name: 'Branch Manager', href: '/branch-manager', icon: Building2, role: 'BRANCH_MANAGER' },
+    { name: 'Agent Panel', href: '/agent', icon: UserCheck, role: 'AGENT' },
     { name: 'Customer Panel', href: '/customer', icon: User, role: 'CUSTOMER' },
   ]
 

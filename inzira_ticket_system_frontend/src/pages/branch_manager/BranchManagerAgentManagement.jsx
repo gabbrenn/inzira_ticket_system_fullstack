@@ -50,7 +50,11 @@ const BranchManagerAgentManagement = () => {
   const fetchAgents = async () => {
     try {
       setLoading(true)
-      const response = await branchManagerAPI.getAgentsByBranchManager(user.roleEntityId)
+      // Get branch manager info first to get branch office ID
+      const branchManagerResponse = await branchManagerAPI.getBranchManager(user.roleEntityId)
+      const branchOfficeId = branchManagerResponse.data.data.branchOffice.id
+      
+      const response = await branchManagerAPI.getAgentsByBranchManager(branchOfficeId)
       setAgents(response.data.data || [])
     } catch (error) {
       toast.error('Failed to fetch agents')

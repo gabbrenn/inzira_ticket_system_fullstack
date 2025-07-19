@@ -51,6 +51,6 @@ public class User {
     public User() {}
 
     public enum UserRole {
-        ADMIN, AGENCY, CUSTOMER, DRIVER, BRANCH_MANAGER
+        ADMIN, AGENCY, CUSTOMER, DRIVER, BRANCH_MANAGER, AGENT
     }
 }

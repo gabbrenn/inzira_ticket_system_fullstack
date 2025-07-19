@@ -47,21 +47,24 @@ public class SecurityConfig {
                 .requestMatchers("/api/admin/districts/**").hasAnyRole("ADMIN", "CUSTOMER", "AGENCY")
                 .requestMatchers("/api/admin/routes").hasAnyRole("ADMIN", "AGENCY")
                 .requestMatchers("/api/admin/routes/**").hasAnyRole("ADMIN", "AGENCY")
-                .requestMatchers("/api/agency/schedules/search").hasAnyRole("CUSTOMER", "AGENCY")
+                .requestMatchers("/api/agency/schedules/search").hasAnyRole("CUSTOMER", "AGENCY", "AGENT")
                 
                 // Admin endpoints
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 
                 // Agency endpoints  
-                .requestMatchers("/api/agency/**").hasRole("AGENCY")
+                .requestMatchers("/api/agency/**").hasAnyRole("AGENCY", "BRANCH_MANAGER")
                 
                 // Branch Manager endpoints
                 .requestMatchers("/api/branch-manager/**").hasRole("BRANCH_MANAGER")
                 
+                // Agent endpoints
+                .requestMatchers("/api/agent/**").hasRole("AGENT")
+                
                 // Customer endpoints
                 .requestMatchers("/api/customers/**").hasAnyRole("CUSTOMER", "ADMIN")
-                .requestMatchers("/api/bookings/**").hasAnyRole("CUSTOMER", "ADMIN", "AGENCY")
-                .requestMatchers("/api/tickets/**").hasAnyRole("CUSTOMER", "ADMIN", "AGENCY")
+                .requestMatchers("/api/bookings/**").hasAnyRole("CUSTOMER", "ADMIN", "AGENCY", "AGENT")
+                .requestMatchers("/api/tickets/**").hasAnyRole("CUSTOMER", "ADMIN", "AGENCY", "AGENT")
                 
                 // All other requests need authentication
                 .anyRequest().authenticated()

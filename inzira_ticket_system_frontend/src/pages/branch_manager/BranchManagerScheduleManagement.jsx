@@ -35,7 +35,7 @@ const BranchManagerScheduleManagement = () => {
   const fetchSchedules = async () => {
     try {
       setLoading(true)
-      const response = await branchManagerAPI.getSchedules(user.roleEntityId)
+      const response = await branchManagerAPI.getSchedulesByBranchManager(user.roleEntityId)
       setSchedules(response.data.data || [])
     } catch (error) {
       toast.error('Failed to fetch schedules')
@@ -46,7 +46,7 @@ const BranchManagerScheduleManagement = () => {
 
   const fetchAgencyRoutes = async () => {
     try {
-      const response = await branchManagerAPI.getAgencyRoutes(user.roleEntityId)
+      const response = await branchManagerAPI.getAgencyRoutes()
       setAgencyRoutes(response.data.data || [])
     } catch (error) {
       toast.error('Failed to fetch agency routes')
@@ -55,7 +55,7 @@ const BranchManagerScheduleManagement = () => {
 
   const fetchBuses = async () => {
     try {
-      const response = await branchManagerAPI.getBuses(user.roleEntityId)
+      const response = await branchManagerAPI.getBuses()
       setBuses(response.data.data || [])
     } catch (error) {
       toast.error('Failed to fetch buses')
@@ -64,7 +64,7 @@ const BranchManagerScheduleManagement = () => {
 
   const fetchDrivers = async () => {
     try {
-      const response = await branchManagerAPI.getDrivers(user.roleEntityId)
+      const response = await branchManagerAPI.getDrivers()
       setDrivers(response.data.data || [])
     } catch (error) {
       toast.error('Failed to fetch drivers')
