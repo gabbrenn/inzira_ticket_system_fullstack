@@ -38,6 +38,11 @@ import BranchManagerAgentManagement from './pages/branch_manager/BranchManagerAg
 import BranchManagerScheduleManagement from './pages/branch_manager/BranchManagerScheduleManagement'
 import BranchManagerReports from './pages/branch_manager/BranchManagerReports'
 
+// Agent pages
+import AgentDashboard from './pages/agent/AgentDashboard'
+import AgentBookingManagement from './pages/agent/AgentBookingManagement'
+import AgentProfile from './pages/agent/AgentProfile'
+
 function App() {
   return (
     <AuthProvider>
@@ -144,6 +149,23 @@ function App() {
               <Route path="/branch-manager/reports" element={
                 <ProtectedRoute requiredRole="BRANCH_MANAGER">
                   <BranchManagerReports />
+                </ProtectedRoute>
+              } />
+              
+              {/* Agent Routes */}
+              <Route path="/agent" element={
+                <ProtectedRoute requiredRole="AGENT">
+                  <AgentDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/agent/bookings" element={
+                <ProtectedRoute requiredRole="AGENT">
+                  <AgentBookingManagement />
+                </ProtectedRoute>
+              } />
+              <Route path="/agent/profile" element={
+                <ProtectedRoute requiredRole="AGENT">
+                  <AgentProfile />
                 </ProtectedRoute>
               } />
               

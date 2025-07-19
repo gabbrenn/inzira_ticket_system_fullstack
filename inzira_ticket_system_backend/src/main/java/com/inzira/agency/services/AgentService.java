@@ -78,7 +78,7 @@ public class AgentService {
         user.setFirstName(savedAgent.getFirstName());
         user.setLastName(savedAgent.getLastName());
         user.setPhoneNumber(savedAgent.getPhoneNumber());
-        user.setRole(User.UserRole.AGENCY); // Agents use AGENCY role but with limited permissions
+        user.setRole(User.UserRole.AGENT); // Agents have their own role
         user.setStatus("ACTIVE");
         user.setRoleEntityId(savedAgent.getId());
         userRepository.save(user);
