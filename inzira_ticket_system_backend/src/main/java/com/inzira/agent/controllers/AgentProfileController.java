@@ -10,7 +10,7 @@ import com.inzira.shared.exceptions.ApiResponse;
 
 @RestController
 @RequestMapping("/api/agent")
-public class AgentController {
+public class AgentProfileController {
 
     @Autowired
     private AgentService agentService;
