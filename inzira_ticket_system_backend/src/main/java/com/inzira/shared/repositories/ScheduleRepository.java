@@ -16,11 +16,13 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     
     @Query("SELECT s FROM Schedule s WHERE s.agencyRoute.route.origin.id = :originId " +
            "AND s.agencyRoute.route.destination.id = :destinationId " +
-           "AND s.departureDate = :departureDate AND s.status = :status")
+           "AND s.departureDate = :departureDate AND s.status = :status " +
+           "AND (:agencyId IS NULL OR s.agencyRoute.agency.id = :agencyId)")
     List<Schedule> findAvailableSchedules(@Param("originId") Long originId, 
                                         @Param("destinationId") Long destinationId,
                                         @Param("departureDate") LocalDate departureDate,
-                                        @Param("status") String status);
+                                        @Param("status") String status,
+                                        @Param("agencyId") Long agencyId);
     
     List<Schedule> findByBusIdAndDepartureDate(Long busId, LocalDate departureDate);
     List<Schedule> findByDriverIdAndDepartureDate(Long driverId, LocalDate departureDate);

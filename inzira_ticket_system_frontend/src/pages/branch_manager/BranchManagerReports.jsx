@@ -233,6 +233,9 @@ const BranchManagerReports = () => {
               <div className="text-sm text-gray-500 mt-1">
                 {selectedSchedule.agencyRoute.route.origin.name} → {selectedSchedule.agencyRoute.route.destination.name} 
                 on {selectedSchedule.departureDate}
+                <div className="mt-1 text-xs">
+                  Total bookings: {scheduleBookings.length}
+                </div>
               </div>
             )}
           </div>
@@ -260,9 +263,14 @@ const BranchManagerReports = () => {
                           {booking.customer.firstName} {booking.customer.lastName}
                         </div>
                       </div>
-                      <span className={getStatusBadge(booking.status)}>
-                        {booking.status}
-                      </span>
+                      <div>
+                        <span className={getStatusBadge(booking.status)}>
+                          {booking.status}
+                        </span>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {booking.customer.email ? 'Online Customer' : 'Walk-in Customer'}
+                        </div>
+                      </div>
                     </div>
                     <div className="flex justify-between text-sm text-gray-600">
                       <span>{booking.numberOfSeats} seat(s)</span>
@@ -270,6 +278,9 @@ const BranchManagerReports = () => {
                     </div>
                     <div className="text-xs text-gray-500 mt-1">
                       {booking.pickupPoint.name} → {booking.dropPoint.name}
+                      <div className="mt-1">
+                        Booked: {new Date(booking.createdAt).toLocaleString()}
+                      </div>
                     </div>
                   </div>
                 ))}

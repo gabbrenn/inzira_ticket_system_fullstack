@@ -60,6 +60,35 @@ public class AgencyRouteService {
         return agencyRouteRepository.save(agencyRoute);
     }
 
+    public AgencyRoute updateAgencyRoute(Long id, Long agencyId, Long routeId, double price, List<Long> pickupPointIds, List<Long> dropPointIds) {
+        AgencyRoute existingRoute = agencyRouteRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Agency route not found with ID: " + id));
+
+        Agency agency = agencyRepository.findById(agencyId)
+                .orElseThrow(() -> new EntityNotFoundException("Agency not found with ID: " + agencyId));
+
+        Route route = routeRepository.findById(routeId)
+                .orElseThrow(() -> new EntityNotFoundException("Route not found with ID: " + routeId));
+
+        List<RoutePoint> pickupPoints = routePointRepository.findAllById(pickupPointIds);
+        if (pickupPoints.size() != pickupPointIds.size()) {
+            throw new IllegalArgumentException("One or more pickup points not found");
+        }
+
+        List<RoutePoint> dropPoints = routePointRepository.findAllById(dropPointIds);
+        if (dropPoints.size() != dropPointIds.size()) {
+            throw new IllegalArgumentException("One or more drop points not found");
+        }
+
+        existingRoute.setAgency(agency);
+        existingRoute.setRoute(route);
+        existingRoute.setPrice(price);
+        existingRoute.setPickupPoints(pickupPoints);
+        existingRoute.setDropPoints(dropPoints);
+
+        return agencyRouteRepository.save(existingRoute);
+    }
+
     public List<AgencyRoute> getAllAgencyRoutes() {
         return agencyRouteRepository.findAll();
     }

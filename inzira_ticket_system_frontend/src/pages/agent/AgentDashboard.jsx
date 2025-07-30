@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Users, Calendar, CreditCard, User, MapPin, Clock, Building2 } from 'lucide-react'
+import { Users, Calendar, CreditCard, User, MapPin, Clock, Building2, BarChart3 } from 'lucide-react'
 import { agentAPI } from '../../services/api'
 import { useAuth } from '../../contexts/AuthContext'
 import toast from 'react-hot-toast'
@@ -65,12 +65,20 @@ const AgentDashboard = () => {
       icon: User,
       color: 'bg-purple-500',
       actions: ['Update Info', 'Change Password', 'Contact Details']
+    },
+    {
+      title: 'Reports & Analytics',
+      description: 'View your booking reports and performance',
+      link: '/agent/reports',
+      icon: BarChart3,
+      color: 'bg-orange-500',
+      actions: ['Daily Reports', 'Schedule Reports', 'Download Tickets']
     }
   ]
 
   const quickActions = [
     { title: 'New Booking', action: 'new-booking', icon: CreditCard, link: '/agent/bookings' },
-    { title: 'View Bookings', action: 'view-bookings', icon: Calendar, link: '/agent/bookings' },
+    { title: 'View Reports', action: 'view-reports', icon: BarChart3, link: '/agent/reports' },
     { title: 'Update Profile', action: 'update-profile', icon: User, link: '/agent/profile' },
   ]
 

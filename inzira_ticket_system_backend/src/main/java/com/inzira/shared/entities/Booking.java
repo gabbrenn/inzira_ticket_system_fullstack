@@ -55,6 +55,13 @@ public class Booking {
     @Column(length = 500)
     private String ticketPdfPath;
 
+    // Track who created the booking (for reporting)
+    @Column(length = 50)
+    private String createdBy; // "CUSTOMER", "AGENT"
+
+    // Agent ID if created by agent
+    private Long createdByAgentId;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;

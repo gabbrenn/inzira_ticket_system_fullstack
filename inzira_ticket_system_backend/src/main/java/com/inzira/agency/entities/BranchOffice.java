@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import com.inzira.shared.entities.District;
+
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -32,6 +34,10 @@ public class BranchOffice {
     @ManyToOne(optional = false)
     @JoinColumn(name = "agency_id")
     private Agency agency;
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "district_id")
+    private District district;
 
     @CreationTimestamp
     @Column(updatable = false)

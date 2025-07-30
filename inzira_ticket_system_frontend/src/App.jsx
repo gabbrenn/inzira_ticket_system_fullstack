@@ -42,6 +42,7 @@ import BranchManagerReports from './pages/branch_manager/BranchManagerReports'
 import AgentDashboard from './pages/agent/AgentDashboard'
 import AgentBookingManagement from './pages/agent/AgentBookingManagement'
 import AgentProfile from './pages/agent/AgentProfile'
+import AgentReports from './pages/agent/AgentReports'
 
 function App() {
   return (
@@ -166,6 +167,11 @@ function App() {
               <Route path="/agent/profile" element={
                 <ProtectedRoute requiredRole="AGENT">
                   <AgentProfile />
+                </ProtectedRoute>
+              } />
+              <Route path="/agent/reports" element={
+                <ProtectedRoute requiredRole="AGENT">
+                  <AgentReports />
                 </ProtectedRoute>
               } />
               
