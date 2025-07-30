@@ -86,10 +86,15 @@ const AgentBookingManagement = () => {
 
     try {
       setSearching(true)
-      const response = await agentAPI.searchSchedules({
+      // Get agent info first to filter schedules by agency
+      const agentResponse = await agentAPI.getProfile(user.roleEntityId)
+      const agentData = agentResponse.data.data
+      
+      const response = await agentAPI.searchSchedulesByAgency({
         originId: searchForm.originId,
         destinationId: searchForm.destinationId,
-        departureDate: searchForm.departureDate
+        departureDate: searchForm.departureDate,
+        agencyId: agentData.agency.id
       })
       setSchedules(response.data.data || [])
       
@@ -144,13 +149,42 @@ const AgentBookingManagement = () => {
       
       // Refresh bookings and schedules
       fetchBookings()
-      handleSearch({ preventDefault: () => {} })
+      await handleSearch({ preventDefault: () => {} })
       
       // Show booking details
       const booking = response.data.data
       toast.success(`Booking Reference: ${booking.bookingReference}`)
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to create booking')
+    }
+  }
+
+  const handleDownloadTicket = async (bookingId) => {
+    try {
+      const response = await fetch(`http://localhost:8080/api/tickets/download/${bookingId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to download ticket')
+      }
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.style.display = 'none'
+      a.href = url
+      a.download = `ticket_${bookings.find(b => b.id === bookingId)?.bookingReference}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      
+      toast.success('Ticket downloaded successfully')
+    } catch (error) {
+      toast.error('Failed to download ticket')
     }
   }
 
@@ -344,64 +378,6 @@ const AgentBookingManagement = () => {
                         {schedule.availableSeats === 0 ? 'Sold Out' : 'Book Now'}
                         {schedule.availableSeats > 0 && <ArrowRight className="h-4 w-4 ml-2" />}
                       </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Recent Bookings */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Recent Bookings</h2>
-        </div>
-
-        <div className="p-6">
-          {loading ? (
-            <div className="text-center py-8">
-              <div className="loading-spinner mx-auto"></div>
-            </div>
-          ) : bookings.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-              <p>No bookings found. Create your first booking to get started.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {bookings.slice(0, 10).map((booking) => (
-                <div key={booking.id} className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <div className="font-medium text-gray-900">
-                        {booking.bookingReference}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {booking.customer.firstName} {booking.customer.lastName}
-                      </div>
-                    </div>
-                    <span className={getStatusBadge(booking.status)}>
-                      {booking.status}
-                    </span>
-                  </div>
-                  <div className="text-sm text-gray-600 mb-2">
-                    <div className="flex items-center mb-1">
-                      <MapPin className="h-3 w-3 mr-1" />
-                      {booking.schedule.agencyRoute.route.origin.name} → {booking.schedule.agencyRoute.route.destination.name}
-                    </div>
-                    <div className="flex items-center">
-                      <Clock className="h-3 w-3 mr-1" />
-                      {booking.schedule.departureDate} at {booking.schedule.departureTime}
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <div className="text-sm font-medium text-primary-600">
-                      {booking.totalAmount} RWF ({booking.numberOfSeats} seat{booking.numberOfSeats > 1 ? 's' : ''})
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {new Date(booking.createdAt).toLocaleDateString()}
                     </div>
                   </div>
                 </div>

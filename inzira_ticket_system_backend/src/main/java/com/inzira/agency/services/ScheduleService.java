@@ -89,7 +89,11 @@ public class ScheduleService {
     }
 
     public List<Schedule> searchSchedules(Long originId, Long destinationId, LocalDate departureDate) {
-        return scheduleRepository.findAvailableSchedules(originId, destinationId, departureDate, "SCHEDULED");
+        return scheduleRepository.findAvailableSchedules(originId, destinationId, departureDate, "SCHEDULED", null);
+    }
+
+    public List<Schedule> searchSchedulesByAgency(Long originId, Long destinationId, LocalDate departureDate, Long agencyId) {
+        return scheduleRepository.findAvailableSchedules(originId, destinationId, departureDate, "SCHEDULED", agencyId);
     }
 
     public Schedule updateSchedule(Long id, Schedule updatedSchedule) {

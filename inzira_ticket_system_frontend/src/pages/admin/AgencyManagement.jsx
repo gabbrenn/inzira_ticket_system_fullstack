@@ -298,7 +298,6 @@ const AgencyManagement = () => {
                     onChange={(e) => setAgencyForm({ ...agencyForm, email: e.target.value })}
                     className="input w-full"
                     required
-                    disabled={editingAgency} // Email shouldn't be editable
                   />
                 </div>
 
@@ -353,8 +352,11 @@ const AgencyManagement = () => {
                       value={agencyForm.password}
                       onChange={(e) => setAgencyForm({ ...agencyForm, password: e.target.value })}
                       className="input w-full"
-                      required
+                      placeholder="Leave empty for auto-generated password"
                     />
+                    <p className="text-xs text-gray-500 mt-1">
+                      If left empty, a password will be generated automatically
+                    </p>
                   </div>
                 )}
 

@@ -69,6 +69,26 @@ public class AgencyRouteController {
         return ResponseEntity.ok(new ApiResponse<>(true, message, dtoList));
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<AgencyRouteDTO>> updateAgencyRoute(@PathVariable Long id, @RequestBody Map<String, Object> request) {
+        Long agencyId = Long.valueOf(request.get("agencyId").toString());
+        Long routeId = Long.valueOf(request.get("routeId").toString());
+        double price = Double.parseDouble(request.get("price").toString());
+
+        @SuppressWarnings("unchecked")
+        List<Integer> pickupPointInts = (List<Integer>) request.get("pickupPointIds");
+        List<Long> pickupPointIds = pickupPointInts.stream().map(Long::valueOf).toList();
+
+        @SuppressWarnings("unchecked")
+        List<Integer> dropPointInts = (List<Integer>) request.get("dropPointIds");
+        List<Long> dropPointIds = dropPointInts.stream().map(Long::valueOf).toList();
+
+        AgencyRoute agencyRoute = agencyRouteService.updateAgencyRoute(id, agencyId, routeId, price, pickupPointIds, dropPointIds);
+        AgencyRouteDTO dto = AgencyRouteMapper.toDTO(agencyRoute);
+        
+        return ResponseEntity.ok(new ApiResponse<>(true, "Agency route updated successfully", dto));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteAgencyRoute(@PathVariable Long id) {
         agencyRouteService.delete(id);

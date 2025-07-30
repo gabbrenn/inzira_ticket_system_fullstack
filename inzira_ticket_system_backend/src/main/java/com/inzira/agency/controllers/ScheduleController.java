@@ -51,9 +51,16 @@ public class ScheduleController {
     public ResponseEntity<ApiResponse<List<Schedule>>> searchSchedules(
             @RequestParam Long originId,
             @RequestParam Long destinationId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate departureDate) {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate departureDate,
+            @RequestParam(required = false) Long agencyId) {
         
-        List<Schedule> schedules = scheduleService.searchSchedules(originId, destinationId, departureDate);
+        List<Schedule> schedules;
+        if (agencyId != null) {
+            schedules = scheduleService.searchSchedulesByAgency(originId, destinationId, departureDate, agencyId);
+        } else {
+            schedules = scheduleService.searchSchedules(originId, destinationId, departureDate);
+        }
+        
         String message = schedules.isEmpty() ? "No schedules found for the specified criteria" : "Schedules found";
         return ResponseEntity.ok(new ApiResponse<>(true, message, schedules));
     }

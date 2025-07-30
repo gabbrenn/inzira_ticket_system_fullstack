@@ -6,6 +6,7 @@ import toast from 'react-hot-toast'
 
 const BranchOfficeManagement = () => {
   const [branchOffices, setBranchOffices] = useState([])
+  const [districts, setDistricts] = useState([])
   const [loading, setLoading] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [editingOffice, setEditingOffice] = useState(null)
@@ -17,12 +18,14 @@ const BranchOfficeManagement = () => {
     phoneNumber: '',
     email: '',
     status: 'ACTIVE',
-    agency: { id: '' }
+    agency: { id: '' },
+    district: { id: '' }
   })
 
   useEffect(() => {
     if (user?.roleEntityId) {
       fetchBranchOffices()
+      fetchDistricts()
     }
   }, [user])
 
@@ -35,6 +38,15 @@ const BranchOfficeManagement = () => {
       toast.error('Failed to fetch branch offices')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchDistricts = async () => {
+    try {
+      const response = await agencyAPI.getDistricts()
+      setDistricts(response.data.data || [])
+    } catch (error) {
+      toast.error('Failed to fetch districts')
     }
   }
 
@@ -85,7 +97,8 @@ const BranchOfficeManagement = () => {
       phoneNumber: office.phoneNumber,
       email: office.email || '',
       status: office.status,
-      agency: { id: office.agency.id.toString() }
+      agency: { id: office.agency.id.toString() },
+      district: { id: office.district.id.toString() }
     })
     setShowForm(true)
   }
@@ -97,7 +110,8 @@ const BranchOfficeManagement = () => {
       phoneNumber: '',
       email: '',
       status: 'ACTIVE',
-      agency: { id: '' }
+      agency: { id: '' },
+      district: { id: '' }
     })
     setShowForm(false)
     setEditingOffice(null)
@@ -167,6 +181,10 @@ const BranchOfficeManagement = () => {
                     <div className="flex items-start">
                       <MapPin className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
                       <span>{office.address}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <MapPin className="h-4 w-4 mr-2 flex-shrink-0" />
+                      <span>District: {office.district?.name}</span>
                     </div>
                     <div className="flex items-center">
                       <Phone className="h-4 w-4 mr-2 flex-shrink-0" />
@@ -272,6 +290,25 @@ const BranchOfficeManagement = () => {
                     onChange={(e) => setOfficeForm({ ...officeForm, email: e.target.value })}
                     className="input w-full"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    District
+                  </label>
+                  <select
+                    value={officeForm.district.id}
+                    onChange={(e) => setOfficeForm({ ...officeForm, district: { id: e.target.value } })}
+                    className="input w-full"
+                    required
+                  >
+                    <option value="">Select district</option>
+                    {districts.map((district) => (
+                      <option key={district.id} value={district.id}>
+                        {district.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>

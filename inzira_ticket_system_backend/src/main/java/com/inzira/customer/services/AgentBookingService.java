@@ -127,6 +127,8 @@ public class AgentBookingService {
         booking.setStatus("CONFIRMED"); // Agent bookings are automatically confirmed
         booking.setPaymentStatus("PAID"); // Assume payment is handled by agent
         booking.setQrCode(qrCode);
+        booking.setCreatedBy("AGENT");
+        booking.setCreatedByAgentId(request.getAgentId());
 
         // Save booking first
         Booking savedBooking = bookingRepository.save(booking);

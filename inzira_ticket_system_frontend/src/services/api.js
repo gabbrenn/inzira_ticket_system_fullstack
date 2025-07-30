@@ -284,11 +284,16 @@ export const agentAPI = {
   updateProfile: (agentId, data) => api.put(`/agent/profile/${agentId}`, data),
   
   // Access to schedules for booking
-  searchSchedules: (params) => api.get('/agency/schedules/search', { params }),
+  searchSchedulesByAgency: (params) => api.get('/agency/schedules/search', { params }),
   
   // Access to districts and route points
   getDistricts: () => sharedAPI.getDistricts(),
   getRoutePoints: (districtId) => sharedAPI.getRoutePoints(districtId),
+  
+  // Agent reports
+  getDailyBookings: (agentId, date) => api.get(`/agent/reports/daily/${agentId}?date=${date}`),
+  getScheduleBookings: (agentId, scheduleId) => api.get(`/agent/reports/schedule/${agentId}/${scheduleId}`),
+  getAgencySchedules: (agencyId) => api.get(`/agency/schedules/agency/${agencyId}`),
 }
 
 export default api

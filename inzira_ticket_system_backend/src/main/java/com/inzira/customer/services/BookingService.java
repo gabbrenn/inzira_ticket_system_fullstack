@@ -104,6 +104,7 @@ public class BookingService {
         booking.setStatus("PENDING");
         booking.setPaymentStatus("PENDING");
         booking.setQrCode(qrCode);
+        booking.setCreatedBy("CUSTOMER");
 
         // Save booking first
         Booking savedBooking = bookingRepository.save(booking);

@@ -46,7 +46,11 @@ const BranchManagerScheduleManagement = () => {
 
   const fetchAgencyRoutes = async () => {
     try {
-      const response = await branchManagerAPI.getAgencyRoutes()
+      // Get branch manager info first to get agency ID
+      const branchManagerResponse = await branchManagerAPI.getBranchManager(user.roleEntityId)
+      const agencyId = branchManagerResponse.data.data.agency.id
+      
+      const response = await branchManagerAPI.getAgencyRoutesByAgency(agencyId)
       setAgencyRoutes(response.data.data || [])
     } catch (error) {
       toast.error('Failed to fetch agency routes')
@@ -55,7 +59,11 @@ const BranchManagerScheduleManagement = () => {
 
   const fetchBuses = async () => {
     try {
-      const response = await branchManagerAPI.getBuses()
+      // Get branch manager info first to get agency ID
+      const branchManagerResponse = await branchManagerAPI.getBranchManager(user.roleEntityId)
+      const agencyId = branchManagerResponse.data.data.agency.id
+      
+      const response = await branchManagerAPI.getBusesByAgency(agencyId)
       setBuses(response.data.data || [])
     } catch (error) {
       toast.error('Failed to fetch buses')
@@ -64,7 +72,11 @@ const BranchManagerScheduleManagement = () => {
 
   const fetchDrivers = async () => {
     try {
-      const response = await branchManagerAPI.getDrivers()
+      // Get branch manager info first to get agency ID
+      const branchManagerResponse = await branchManagerAPI.getBranchManager(user.roleEntityId)
+      const agencyId = branchManagerResponse.data.data.agency.id
+      
+      const response = await branchManagerAPI.getDriversByAgency(agencyId)
       setDrivers(response.data.data || [])
     } catch (error) {
       toast.error('Failed to fetch drivers')
