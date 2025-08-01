@@ -13,7 +13,7 @@ import com.inzira.shared.entities.Schedule;
 import com.inzira.shared.repositories.ScheduleRepository;
 
 @Service
-public class ScheduleCleanupService {
+public class ScheduleCleanupService54 {
 
     @Autowired
     private ScheduleRepository scheduleRepository;

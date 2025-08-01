@@ -1,6 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { Bus, Users, MapPin, Calendar, ArrowRight, Shield, Clock, CreditCard } from 'lucide-react'
+import BookingReferenceSearch from '../components/BookingReferenceSearch';
 
 const Home = () => {
   const features = [

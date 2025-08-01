@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { Search, MapPin, Calendar, Clock, Users, ArrowRight, Download, User, Phone, Mail } from 'lucide-react'
 import { customerAPI } from '../../services/api'
 import toast from 'react-hot-toast'
+import { CheckCircle } from 'lucide-react'
+
 
 const GuestBooking = () => {
   const [districts, setDistricts] = useState([])
