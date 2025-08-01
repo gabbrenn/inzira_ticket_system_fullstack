@@ -136,7 +136,7 @@ const AgentDashboard = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Modules */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {agentModules.map((module, index) => {
               const Icon = module.icon
@@ -214,63 +214,6 @@ const AgentDashboard = () => {
                       </div>
                       <span className={getStatusBadge(booking.status)}>
                         {booking.status}
-                      </span>
-                    </div>
-                    <div className="text-sm text-gray-600 mb-2">
-                      <div className="flex items-center mb-1">
-                        <MapPin className="h-3 w-3 mr-1" />
-                        {booking.schedule.agencyRoute.route.origin.name} → {booking.schedule.agencyRoute.route.destination.name}
-                      </div>
-                      <div className="flex items-center">
-                        <Clock className="h-3 w-3 mr-1" />
-                        {booking.schedule.departureDate} at {booking.schedule.departureTime}
-                      </div>
-                    </div>
-                    <div className="text-sm font-medium text-primary-600">
-                      {booking.totalAmount} RWF
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Agent Info */}
-      {agentProfile && (
-        <div className="mt-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Agent Information</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center">
-              <div className="flex items-center justify-center mb-2">
-                <Building2 className="h-5 w-5 text-blue-600 mr-2" />
-                <span className="font-medium text-gray-900">{agentProfile.branchOffice.officeName}</span>
-              </div>
-              <div className="text-sm text-gray-600">Branch Office</div>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center mb-2">
-                <Users className="h-5 w-5 text-green-600 mr-2" />
-                <span className="font-medium text-gray-900">{agentProfile.agency.agencyName}</span>
-              </div>
-              <div className="text-sm text-gray-600">Agency</div>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center mb-2">
-                <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                  agentProfile.confirmedByAgency 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-yellow-100 text-yellow-800'
-                }`}>
-                  {agentProfile.confirmedByAgency ? 'Confirmed' : 'Pending'}
-                </span>
-              </div>
-              <div className="text-sm text-gray-600">Status</div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
