@@ -31,7 +31,11 @@ const BusManagement = () => {
       setLoading(true)
       // Fetch buses for the authenticated agency
       const response = await agencyAPI.getBusesByAgency(user.roleEntityId)
-      setBuses(response.data.data || [])
+      // Sort buses by creation date (newest first)
+      const sortedBuses = (response.data.data || []).sort((a, b) => 
+        new Date(b.createdAt) - new Date(a.createdAt)
+      )
+      setBuses(sortedBuses)
     } catch (error) {
       toast.error('Failed to fetch buses')
     } finally {

@@ -37,7 +37,13 @@ const ScheduleManagement = () => {
       setLoading(true)
       // Fetch schedules for the authenticated agency
       const response = await agencyAPI.getSchedulesByAgency(user.roleEntityId)
-      setSchedules(response.data.data || [])
+      // Sort schedules by departure date and time (newest first)
+      const sortedSchedules = (response.data.data || []).sort((a, b) => {
+        const dateA = new Date(`${a.departureDate}T${a.departureTime}`)
+        const dateB = new Date(`${b.departureDate}T${b.departureTime}`)
+        return dateB - dateA
+      })
+      setSchedules(sortedSchedules)
     } catch (error) {
       toast.error('Failed to fetch schedules')
     } finally {

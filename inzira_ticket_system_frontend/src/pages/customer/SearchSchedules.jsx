@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react'
-import { Search, MapPin, Calendar, Clock, Users, ArrowRight, Download, Filter, DollarSign } from 'lucide-react'
+import { Search, MapPin, Calendar, Clock, Users, ArrowRight } from 'lucide-react'
 import { customerAPI } from '../../services/api'
 import { useAuth } from '../../contexts/AuthContext'
+import { useWebSocket } from '../../components/WebSocketProvider'
 import toast from 'react-hot-toast'
 
 const SearchSchedules = () => {
+  const { seatUpdates, subscribeTo, unsubscribeFrom } = useWebSocket()
   const [districts, setDistricts] = useState([])
   const [schedules, setSchedules] = useState([])
   const [routePoints, setRoutePoints] = useState({})
@@ -12,13 +14,6 @@ const SearchSchedules = () => {
   const [searching, setSearching] = useState(false)
   const [showBookingModal, setShowBookingModal] = useState(false)
   const [selectedSchedule, setSelectedSchedule] = useState(null)
-  const [filteredSchedules, setFilteredSchedules] = useState([])
-  const [filters, setFilters] = useState({
-    agency: '',
-    minPrice: '',
-    maxPrice: '',
-    departureTime: ''
-  })
   const { user } = useAuth()
 
   const [searchForm, setSearchForm] = useState({
@@ -97,17 +92,20 @@ const SearchSchedules = () => {
           new Date(`${b.departureDate}T${b.departureTime}`) - new Date(`${a.departureDate}T${a.departureTime}`)
         )
         setSchedules(sortedSchedules)
-        setFilteredSchedules(sortedSchedules)
         
         // Fetch route points for origin and destination
         await fetchRoutePoints(searchForm.originId)
         await fetchRoutePoints(searchForm.destinationId)
+        
+        // Subscribe to seat updates for all schedules
+        sortedSchedules.forEach(schedule => {
+          subscribeTo(schedule.id)
+        })
       }
     } catch (error) {
       console.error('Search error:', error)
       toast.error('Failed to search schedules. Please try again.')
       setSchedules([])
-      setFilteredSchedules([])
     } finally {
       setSearching(false)
     }
@@ -163,6 +161,12 @@ const SearchSchedules = () => {
 
   const originPoints = selectedSchedule ? routePoints[selectedSchedule.agencyRoute.route.origin.id] || [] : []
   const destinationPoints = selectedSchedule ? routePoints[selectedSchedule.agencyRoute.route.destination.id] || [] : []
+
+  // Update schedules with real-time seat availability
+  const schedulesWithUpdates = schedules.map(schedule => ({
+    ...schedule,
+    availableSeats: seatUpdates[schedule.id] !== undefined ? seatUpdates[schedule.id] : schedule.availableSeats
+  }))
 
   if (loading) {
     return (
@@ -259,85 +263,12 @@ const SearchSchedules = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* Filters Sidebar */}
-        <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sticky top-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <Filter className="h-5 w-5 mr-2" />
-              Filters
-            </h3>
-            
-            {/* Agency Filter */}
-            <div className="mb-6">
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="font-medium text-gray-900 mb-3">Agency</h4>
-                <input
-                  type="text"
-                  placeholder="Search by agency name..."
-                  value={filters.agency}
-                  onChange={(e) => setFilters({ ...filters, agency: e.target.value })}
-                  className="input w-full"
-                />
-              </div>
-            </div>
-            
-            {/* Price Filter */}
-            <div className="mb-6">
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="font-medium text-gray-900 mb-3 flex items-center">
-                  <DollarSign className="h-4 w-4 mr-1" />
-                  Price Range (RWF)
-                </h4>
-                <div className="space-y-3">
-                  <input
-                    type="number"
-                    placeholder="Min price"
-                    value={filters.minPrice}
-                    onChange={(e) => setFilters({ ...filters, minPrice: e.target.value })}
-                    className="input w-full"
-                  />
-                  <input
-                    type="number"
-                    placeholder="Max price"
-                    value={filters.maxPrice}
-                    onChange={(e) => setFilters({ ...filters, maxPrice: e.target.value })}
-                    className="input w-full"
-                  />
-                </div>
-              </div>
-            </div>
-            
-            {/* Departure Time Filter */}
-            <div className="mb-6">
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="font-medium text-gray-900 mb-3 flex items-center">
-                  <Clock className="h-4 w-4 mr-1" />
-                  Departure Time
-                </h4>
-                <input
-                  type="time"
-                  value={filters.departureTime}
-                  onChange={(e) => setFilters({ ...filters, departureTime: e.target.value })}
-                  className="input w-full"
-                />
-              </div>
-            </div>
-            
-            <button
-              onClick={() => setFilters({ agency: '', minPrice: '', maxPrice: '', departureTime: '' })}
-              className="btn-outline w-full"
-            >
-              Clear Filters
-            </button>
-          </div>
-        </div>
-
         {/* Search Results */}
-        <div className="lg:col-span-3">
+        <div className="lg:col-span-4">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
             <div className="p-6 border-b border-gray-200">
               <h2 className="text-lg font-semibold text-gray-900">
-                Available Schedules ({filteredSchedules.length})
+                Available Schedules ({schedules.length})
                 {searchForm.originId && searchForm.destinationId && (
                   <span className="text-sm font-normal text-gray-500 ml-2">
                     {getOriginDistrict(searchForm.originId)} → {getDestinationDistrict(searchForm.destinationId)}
@@ -357,15 +288,15 @@ const SearchSchedules = () => {
                   <div className="loading-spinner mx-auto mb-4"></div>
                   <p className="text-gray-500">Searching for schedules...</p>
                 </div>
-              ) : filteredSchedules.length === 0 ? (
+              ) : schedulesWithUpdates.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
                   <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                   <p>No schedules found for your search criteria</p>
-                  <p className="text-sm mt-2">Try adjusting your filters or search for a different date or route</p>
+                  <p className="text-sm mt-2">Try searching for a different date or route</p>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {filteredSchedules.map((schedule) => (
+                  {schedulesWithUpdates.map((schedule) => (
                     <div key={schedule.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
                       <div className="flex items-center justify-between">
                         <div className="flex-1">

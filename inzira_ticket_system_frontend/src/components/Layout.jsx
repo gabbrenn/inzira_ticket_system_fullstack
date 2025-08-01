@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate, Navigate } from 'react-router-dom'
 import { Bus, Users, MapPin, Calendar, User, Home, Settings, LogOut, Building2, UserCheck } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import toast from 'react-hot-toast'
@@ -11,7 +11,7 @@ const Layout = ({ children }) => {
   
   const navigation = [
     { name: 'Home', href: '/', icon: Home, public: true },
-    { name: 'Book Ticket', href: '/guest-booking', icon: Calendar, public: true },
+    { name: 'Book Ticket', href: '/guest-booking', icon: Calendar, public: true, guestOnly: true },
     { name: 'Admin Panel', href: '/admin', icon: Settings, role: 'ADMIN' },
     { name: 'Agency Panel', href: '/agency', icon: Bus, role: 'AGENCY' },
     { name: 'Branch Manager', href: '/branch-manager', icon: Building2, role: 'BRANCH_MANAGER' },
@@ -26,7 +26,8 @@ const Layout = ({ children }) => {
   }
 
   const filteredNavigation = navigation.filter(item => {
-    if (item.public) return true
+    if (item.public && !item.guestOnly) return true
+    if (item.guestOnly) return !isAuthenticated()
     if (!isAuthenticated()) return false
     if (item.role) return hasRole(item.role)
     return true
@@ -71,18 +72,21 @@ const Layout = ({ children }) => {
             <div className="flex items-center space-x-4">
               {isAuthenticated() ? (
                 <>
-                  <div className="text-sm text-gray-700">
+                  <div className="hidden sm:block text-sm text-gray-700">
                     Welcome, <span className="font-medium">{user.firstName}</span>
                     <span className="ml-2 px-2 py-1 bg-primary-100 text-primary-800 text-xs rounded-full">
                       {user.role}
                     </span>
                   </div>
+                  <div className="sm:hidden text-sm text-gray-700">
+                    <span className="font-medium">{user.firstName}</span>
+                  </div>
                   <button
                     onClick={handleLogout}
                     className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 hover:text-gray-700 focus:outline-none transition"
                   >
-                    <LogOut className="h-4 w-4 mr-1" />
-                    Logout
+                    <LogOut className="h-4 w-4 sm:mr-1" />
+                    <span className="hidden sm:inline">Logout</span>
                   </button>
                 </>
               ) : (
@@ -95,9 +99,10 @@ const Layout = ({ children }) => {
                   </Link>
                   <Link
                     to="/register/customer"
-                    className="btn-primary"
+                    className="btn-primary text-sm px-3 py-2"
                   >
-                    Register
+                    <span className="hidden sm:inline">Register</span>
+                    <span className="sm:hidden">Sign Up</span>
                   </Link>
                 </div>
               )}

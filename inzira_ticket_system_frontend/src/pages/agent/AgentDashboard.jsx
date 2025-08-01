@@ -42,27 +42,19 @@ const AgentDashboard = () => {
 
   const agentModules = [
     {
-      title: 'Create Booking',
-      description: 'Create tickets for walk-in customers',
+      title: 'Booking Management',
+      description: 'Create tickets for walk-in customers and manage bookings',
       link: '/agent/bookings',
       icon: CreditCard,
       color: 'bg-blue-500',
-      actions: ['Search Schedules', 'Book Tickets', 'Customer Details']
-    },
-    {
-      title: 'Booking Management',
-      description: 'View and manage all your bookings',
-      link: '/agent/bookings',
-      icon: Calendar,
-      color: 'bg-green-500',
-      actions: ['View Bookings', 'Confirm Payments', 'Print Tickets']
+      actions: ['Search Schedules', 'Book Tickets', 'View Bookings', 'Print Tickets']
     },
     {
       title: 'My Profile',
       description: 'Update your profile information',
       link: '/agent/profile',
       icon: User,
-      color: 'bg-purple-500',
+      color: 'bg-green-500',
       actions: ['Update Info', 'Change Password', 'Contact Details']
     },
     {
@@ -70,14 +62,14 @@ const AgentDashboard = () => {
       description: 'View your booking reports and performance',
       link: '/agent/reports',
       icon: BarChart3,
-      color: 'bg-orange-500',
+      color: 'bg-purple-500',
       actions: ['Daily Reports', 'Schedule Reports', 'Download Tickets']
     }
   ]
 
   const quickActions = [
     { title: 'New Booking', action: 'new-booking', icon: CreditCard, link: '/agent/bookings' },
-    { title: 'View Reports', action: 'view-reports', icon: BarChart3, link: '/agent/reports' },
+    { title: 'My Reports', action: 'view-reports', icon: BarChart3, link: '/agent/reports' },
     { title: 'Update Profile', action: 'update-profile', icon: User, link: '/agent/profile' },
   ]
 

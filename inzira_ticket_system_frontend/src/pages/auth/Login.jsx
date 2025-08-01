@@ -196,6 +196,12 @@ const Login = () => {
               >
                 Register as Customer
               </Link>
+              <Link
+                to="/register/admin"
+                className="btn-outline w-full text-center"
+              >
+                Register as Admin
+              </Link>
             </div>
           </div>
 

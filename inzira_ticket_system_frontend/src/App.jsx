@@ -2,11 +2,15 @@ import React from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from './contexts/AuthContext'
+import { WebSocketProvider } from './components/WebSocketProvider'
 import Layout from './components/Layout'
+import DashboardLayout from './components/DashboardLayout'
 import ProtectedRoute from './components/ProtectedRoute'
 import Home from './pages/Home'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
+import ForgotPassword from './pages/auth/ForgotPassword'
+import ChangePassword from './pages/auth/ChangePassword'
 import Unauthorized from './pages/Unauthorized'
 
 // Admin pages
@@ -48,10 +52,11 @@ import AgentReports from './pages/agent/AgentReports'
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <div className="min-h-screen bg-gray-50">
-          <Layout>
-            <Routes>
+      <WebSocketProvider>
+        <Router>
+          <div className="min-h-screen bg-gray-50">
+            <Layout>
+              <Routes>
               {/* Public routes */}
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
@@ -62,151 +67,206 @@ function App() {
               {/* Admin Routes */}
               <Route path="/admin" element={
                 <ProtectedRoute requiredRole="ADMIN">
-                  <AdminDashboard />
+                  <DashboardLayout>
+                    <AdminDashboard />
+                  </DashboardLayout>
                 </ProtectedRoute>
               } />
               <Route path="/admin/districts" element={
                 <ProtectedRoute requiredRole="ADMIN">
-                  <DistrictManagement />
+                  <DashboardLayout>
+                    <DistrictManagement />
+                  </DashboardLayout>
                 </ProtectedRoute>
               } />
               <Route path="/admin/routes" element={
                 <ProtectedRoute requiredRole="ADMIN">
-                  <RouteManagement />
+                  <DashboardLayout>
+                    <RouteManagement />
+                  </DashboardLayout>
                 </ProtectedRoute>
               } />
               <Route path="/admin/agencies" element={
                 <ProtectedRoute requiredRole="ADMIN">
-                  <AgencyManagement />
+                  <DashboardLayout>
+                    <AgencyManagement />
+                  </DashboardLayout>
                 </ProtectedRoute>
               } />
               
               {/* Agency Routes */}
               <Route path="/agency" element={
                 <ProtectedRoute requiredRole="AGENCY">
-                  <AgencyDashboard />
+                  <DashboardLayout>
+                    <AgencyDashboard />
+                  </DashboardLayout>
                 </ProtectedRoute>
               } />
               <Route path="/agency/profile" element={
                 <ProtectedRoute requiredRole="AGENCY">
-                  <AgencyProfile />
+                  <DashboardLayout>
+                    <AgencyProfile />
+                  </DashboardLayout>
                 </ProtectedRoute>
               } />
               <Route path="/agency/branch-offices" element={
                 <ProtectedRoute requiredRole="AGENCY">
-                  <BranchOfficeManagement />
+                  <DashboardLayout>
+                    <BranchOfficeManagement />
+                  </DashboardLayout>
                 </ProtectedRoute>
               } />
               <Route path="/agency/agents" element={
                 <ProtectedRoute requiredRole="AGENCY">
-                  <AgentManagement />
+                  <DashboardLayout>
+                    <AgentManagement />
+                  </DashboardLayout>
                 </ProtectedRoute>
               } />
               <Route path="/agency/branch-managers" element={
                 <ProtectedRoute requiredRole="AGENCY">
-                  <BranchManagerManagement />
+                  <DashboardLayout>
+                    <BranchManagerManagement />
+                  </DashboardLayout>
                 </ProtectedRoute>
               } />
               <Route path="/agency/booking-history" element={
                 <ProtectedRoute requiredRole="AGENCY">
-                  <AgencyBookingHistory />
+                  <DashboardLayout>
+                    <AgencyBookingHistory />
+                  </DashboardLayout>
                 </ProtectedRoute>
               } />
               <Route path="/agency/buses" element={
                 <ProtectedRoute requiredRole="AGENCY">
-                  <BusManagement />
+                  <DashboardLayout>
+                    <BusManagement />
+                  </DashboardLayout>
                 </ProtectedRoute>
               } />
               <Route path="/agency/drivers" element={
                 <ProtectedRoute requiredRole="AGENCY">
-                  <DriverManagement />
+                  <DashboardLayout>
+                    <DriverManagement />
+                  </DashboardLayout>
                 </ProtectedRoute>
               } />
               <Route path="/agency/routes" element={
                 <ProtectedRoute requiredRole="AGENCY">
-                  <AgencyRouteManagement />
+                  <DashboardLayout>
+                    <AgencyRouteManagement />
+                  </DashboardLayout>
                 </ProtectedRoute>
               } />
               <Route path="/agency/schedules" element={
                 <ProtectedRoute requiredRole="AGENCY">
-                  <ScheduleManagement />
+                  <DashboardLayout>
+                    <ScheduleManagement />
+                  </DashboardLayout>
                 </ProtectedRoute>
               } />
               
               {/* Branch Manager Routes */}
               <Route path="/branch-manager" element={
                 <ProtectedRoute requiredRole="BRANCH_MANAGER">
-                  <BranchManagerDashboard />
+                  <DashboardLayout>
+                    <BranchManagerDashboard />
+                  </DashboardLayout>
                 </ProtectedRoute>
               } />
               <Route path="/branch-manager/agents" element={
                 <ProtectedRoute requiredRole="BRANCH_MANAGER">
-                  <BranchManagerAgentManagement />
+                  <DashboardLayout>
+                    <BranchManagerAgentManagement />
+                  </DashboardLayout>
                 </ProtectedRoute>
               } />
               <Route path="/branch-manager/schedules" element={
                 <ProtectedRoute requiredRole="BRANCH_MANAGER">
-                  <BranchManagerScheduleManagement />
+                  <DashboardLayout>
+                    <BranchManagerScheduleManagement />
+                  </DashboardLayout>
                 </ProtectedRoute>
               } />
               <Route path="/branch-manager/reports" element={
                 <ProtectedRoute requiredRole="BRANCH_MANAGER">
-                  <BranchManagerReports />
+                  <DashboardLayout>
+                    <BranchManagerReports />
+                  </DashboardLayout>
                 </ProtectedRoute>
               } />
               
               {/* Agent Routes */}
               <Route path="/agent" element={
                 <ProtectedRoute requiredRole="AGENT">
-                  <AgentDashboard />
+                  <DashboardLayout>
+                    <AgentDashboard />
+                  </DashboardLayout>
                 </ProtectedRoute>
               } />
               <Route path="/agent/bookings" element={
                 <ProtectedRoute requiredRole="AGENT">
-                  <AgentBookingManagement />
+                  <DashboardLayout>
+                    <AgentBookingManagement />
+                  </DashboardLayout>
                 </ProtectedRoute>
               } />
               <Route path="/agent/profile" element={
                 <ProtectedRoute requiredRole="AGENT">
-                  <AgentProfile />
+                  <DashboardLayout>
+                    <AgentProfile />
+                  </DashboardLayout>
                 </ProtectedRoute>
               } />
               <Route path="/agent/reports" element={
                 <ProtectedRoute requiredRole="AGENT">
-                  <AgentReports />
+                  <DashboardLayout>
+                    <AgentReports />
+                  </DashboardLayout>
                 </ProtectedRoute>
               } />
               
               {/* Customer Routes */}
               <Route path="/customer" element={
                 <ProtectedRoute requiredRole="CUSTOMER">
-                  <CustomerDashboard />
+                  <DashboardLayout>
+                    <CustomerDashboard />
+                  </DashboardLayout>
                 </ProtectedRoute>
               } />
               <Route path="/customer/search" element={
                 <ProtectedRoute requiredRole="CUSTOMER">
-                  <SearchSchedules />
+                  <DashboardLayout>
+                    <SearchSchedules />
+                  </DashboardLayout>
                 </ProtectedRoute>
               } />
               <Route path="/customer/bookings" element={
                 <ProtectedRoute requiredRole="CUSTOMER">
-                  <BookingManagement />
+                  <DashboardLayout>
+                    <BookingManagement />
+                  </DashboardLayout>
                 </ProtectedRoute>
               } />
-            </Routes>
-          </Layout>
-          <Toaster 
-            position="top-right"
-            toastOptions={{
-              duration: 4000,
-              style: {
-                background: '#363636',
-                color: '#fff',
-              },
-            }}
-          />
-        </div>
-      </Router>
+              
+              {/* Auth Routes */}
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/change-password" element={<ChangePassword />} />
+              </Routes>
+            </Layout>
+            <Toaster 
+              position="top-right"
+              toastOptions={{
+                duration: 4000,
+                style: {
+                  background: '#363636',
+                  color: '#fff',
+                },
+              }}
+            />
+          </div>
+        </Router>
+      </WebSocketProvider>
     </AuthProvider>
   )
 }

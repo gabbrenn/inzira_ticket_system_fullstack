@@ -3,6 +3,49 @@ import { Link } from 'react-router-dom'
 import { MapPin, Route, Building2, Users, Plus, Settings } from 'lucide-react'
 
 const AdminDashboard = () => {
+  const [systemStats, setSystemStats] = useState({
+    totalDistricts: 0,
+    totalRoutes: 0,
+    totalAgencies: 0,
+    totalRoutePoints: 0,
+    activeAgencies: 0,
+    totalBookings: 0
+  })
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    fetchSystemStats()
+  }, [])
+
+  const fetchSystemStats = async () => {
+    try {
+      setLoading(true)
+      // Fetch basic stats from existing endpoints
+      const [districtsRes, routesRes, agenciesRes] = await Promise.all([
+        adminAPI.getDistricts(),
+        adminAPI.getRoutes(),
+        adminAPI.getAgencies()
+      ])
+      
+      const districts = districtsRes.data.data || []
+      const routes = routesRes.data.data || []
+      const agencies = agenciesRes.data.data || []
+      
+      setSystemStats({
+        totalDistricts: districts.length,
+        totalRoutes: routes.length,
+        totalAgencies: agencies.length,
+        activeAgencies: agencies.filter(a => a.status === 'ACTIVE').length,
+        totalRoutePoints: districts.reduce((sum, d) => sum + (d.locations?.length || 0), 0),
+        totalBookings: 0 // Would need additional endpoint
+      })
+    } catch (error) {
+      console.error('Failed to fetch system stats:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const adminModules = [
     {
       title: 'District Management',
@@ -109,23 +152,52 @@ const AdminDashboard = () => {
 
       {/* System Overview */}
       <div className="mt-12 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">System Overview</h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-lg font-semibold text-gray-900">System Overview</h2>
+          <button
+            onClick={fetchSystemStats}
+            disabled={loading}
+            className="text-sm text-primary-600 hover:text-primary-800 disabled:opacity-50"
+          >
+            {loading ? 'Refreshing...' : 'Refresh'}
+          </button>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
           <div className="text-center">
-            <div className="text-2xl font-bold text-primary-600 mb-1">12</div>
+            <div className="text-2xl font-bold text-primary-600 mb-1">
+              {systemStats.totalDistricts}
+            </div>
             <div className="text-sm text-gray-600">Total Districts</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-green-600 mb-1">45</div>
-            <div className="text-sm text-gray-600">Active Routes</div>
+            <div className="text-2xl font-bold text-green-600 mb-1">
+              {systemStats.totalRoutes}
+            </div>
+            <div className="text-sm text-gray-600">Total Routes</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-purple-600 mb-1">8</div>
-            <div className="text-sm text-gray-600">Registered Agencies</div>
+            <div className="text-2xl font-bold text-purple-600 mb-1">
+              {systemStats.totalAgencies}
+            </div>
+            <div className="text-sm text-gray-600">Total Agencies</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-orange-600 mb-1">156</div>
+            <div className="text-2xl font-bold text-blue-600 mb-1">
+              {systemStats.activeAgencies}
+            </div>
+            <div className="text-sm text-gray-600">Active Agencies</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-orange-600 mb-1">
+              {systemStats.totalRoutePoints}
+            </div>
             <div className="text-sm text-gray-600">Route Points</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-red-600 mb-1">
+              {systemStats.totalBookings}
+            </div>
+            <div className="text-sm text-gray-600">Total Bookings</div>
           </div>
         </div>
       </div>

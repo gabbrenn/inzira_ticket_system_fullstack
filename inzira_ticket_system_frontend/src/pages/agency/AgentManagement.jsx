@@ -34,7 +34,11 @@ const AgentManagement = () => {
     try {
       setLoading(true)
       const response = await agencyAPI.getAgentsByAgency(user.roleEntityId)
-      setAgents(response.data.data || [])
+      // Sort agents by creation date (newest first)
+      const sortedAgents = (response.data.data || []).sort((a, b) => 
+        new Date(b.createdAt) - new Date(a.createdAt)
+      )
+      setAgents(sortedAgents)
     } catch (error) {
       toast.error('Failed to fetch agents')
     } finally {
