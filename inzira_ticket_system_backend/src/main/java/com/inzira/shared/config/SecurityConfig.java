@@ -47,7 +47,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/admin/districts/**").hasAnyRole("ADMIN", "CUSTOMER", "AGENCY","AGENT")
                 .requestMatchers("/api/admin/routes").hasAnyRole("ADMIN", "AGENCY","AGENT")
                 .requestMatchers("/api/admin/routes/**").hasAnyRole("ADMIN", "AGENCY")
-                .requestMatchers("/api/agency/schedules/search").hasAnyRole("CUSTOMER", "AGENCY", "AGENT")
+                .requestMatchers("/api/agency/schedules/**").hasAnyRole("CUSTOMER", "AGENCY", "AGENT")
+    
                 
                 // Admin endpoints
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
