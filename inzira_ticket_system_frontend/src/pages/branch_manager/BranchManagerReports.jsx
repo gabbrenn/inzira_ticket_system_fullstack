@@ -268,7 +268,7 @@ const BranchManagerReports = () => {
                           {booking.status}
                         </span>
                         <div className="text-xs text-gray-500 mt-1">
-                          {booking.customer.email ? 'Online Customer' : 'Walk-in Customer'}
+                          {booking.createdBy === 'AGENT' ? 'Agent Booking' : 'Online Customer'}
                         </div>
                       </div>
                     </div>

@@ -1,19 +1,18 @@
 import React, { useState, useEffect } from 'react'
-import { Search, Calendar, MapPin, Clock, Users, ArrowRight, Plus, X, Save } from 'lucide-react'
-import { agentAPI } from '../../services/api'
-import { useAuth } from '../../contexts/AuthContext'
+import { Search, MapPin, Calendar, Clock, Users, ArrowRight, Download, User, Phone, Mail } from 'lucide-react'
+import { customerAPI } from '../../services/api'
 import toast from 'react-hot-toast'
 
-const AgentBookingManagement = () => {
-  const [bookings, setBookings] = useState([])
+const GuestBooking = () => {
   const [districts, setDistricts] = useState([])
   const [schedules, setSchedules] = useState([])
   const [routePoints, setRoutePoints] = useState({})
   const [loading, setLoading] = useState(false)
   const [searching, setSearching] = useState(false)
-  const [showBookingForm, setShowBookingForm] = useState(false)
+  const [showBookingModal, setShowBookingModal] = useState(false)
   const [selectedSchedule, setSelectedSchedule] = useState(null)
-  const { user } = useAuth()
+  const [bookingComplete, setBookingComplete] = useState(false)
+  const [completedBooking, setCompletedBooking] = useState(null)
 
   const [searchForm, setSearchForm] = useState({
     originId: '',
@@ -22,10 +21,10 @@ const AgentBookingManagement = () => {
   })
 
   const [bookingForm, setBookingForm] = useState({
-    customerFirstName: '',
-    customerLastName: '',
-    customerEmail: '',
-    customerPhoneNumber: '',
+    firstName: '',
+    lastName: '',
+    email: '',
+    phoneNumber: '',
     numberOfSeats: 1,
     pickupPointId: '',
     dropPointId: ''
@@ -33,7 +32,6 @@ const AgentBookingManagement = () => {
 
   useEffect(() => {
     fetchDistricts()
-    fetchBookings()
     // Set default date to today
     const today = new Date().toISOString().split('T')[0]
     setSearchForm(prev => ({ ...prev, departureDate: today }))
@@ -41,20 +39,12 @@ const AgentBookingManagement = () => {
 
   const fetchDistricts = async () => {
     try {
-      const response = await agentAPI.getDistricts()
+      setLoading(true)
+      const response = await customerAPI.getDistricts()
       setDistricts(response.data.data || [])
     } catch (error) {
-      toast.error('Failed to fetch districts')
-    }
-  }
-
-  const fetchBookings = async () => {
-    try {
-      setLoading(true)
-      const response = await agentAPI.getBookingsByAgent(user.roleEntityId)
-      setBookings(response.data.data || [])
-    } catch (error) {
-      toast.error('Failed to fetch bookings')
+      console.error('Failed to fetch districts:', error)
+      toast.error('Failed to fetch districts. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -62,7 +52,7 @@ const AgentBookingManagement = () => {
 
   const fetchRoutePoints = async (districtId) => {
     try {
-      const response = await agentAPI.getRoutePoints(districtId)
+      const response = await customerAPI.getRoutePoints(districtId)
       setRoutePoints(prev => ({
         ...prev,
         [districtId]: response.data.data || []
@@ -86,15 +76,10 @@ const AgentBookingManagement = () => {
 
     try {
       setSearching(true)
-      // Get agent info first to filter schedules by agency
-      const agentResponse = await agentAPI.getProfile(user.roleEntityId)
-      const agentData = agentResponse.data.data
-      
-      const response = await agentAPI.searchSchedulesByAgency({
+      const response = await customerAPI.searchSchedules({
         originId: searchForm.originId,
         destinationId: searchForm.destinationId,
-        departureDate: searchForm.departureDate,
-        agencyId: agentData.agency.id
+        departureDate: searchForm.departureDate
       })
       setSchedules(response.data.data || [])
       
@@ -117,48 +102,42 @@ const AgentBookingManagement = () => {
   const handleBookTicket = (schedule) => {
     setSelectedSchedule(schedule)
     setBookingForm({
-      customerFirstName: '',
-      customerLastName: '',
-      customerEmail: '',
-      customerPhoneNumber: '',
+      firstName: '',
+      lastName: '',
+      email: '',
+      phoneNumber: '',
       numberOfSeats: 1,
       pickupPointId: '',
       dropPointId: ''
     })
-    setShowBookingForm(true)
+    setShowBookingModal(true)
   }
 
-  const handleCreateBooking = async (e) => {
+  const handleCreateGuestBooking = async (e) => {
     e.preventDefault()
     try {
+      // Create guest booking through agent booking endpoint
       const bookingData = {
-        agentId: user.roleEntityId,
+        agentId: null, // Guest booking
         scheduleId: selectedSchedule.id,
         pickupPointId: parseInt(bookingForm.pickupPointId),
         dropPointId: parseInt(bookingForm.dropPointId),
         numberOfSeats: parseInt(bookingForm.numberOfSeats),
-        customerFirstName: bookingForm.customerFirstName,
-        customerLastName: bookingForm.customerLastName,
-        customerEmail: bookingForm.customerEmail || null,
-        customerPhoneNumber: bookingForm.customerPhoneNumber
+        customerFirstName: bookingForm.firstName,
+        customerLastName: bookingForm.lastName,
+        customerEmail: bookingForm.email || null,
+        customerPhoneNumber: bookingForm.phoneNumber,
+        isGuestBooking: true
       }
 
-      const response = await agentAPI.createBooking(bookingData)
-      toast.success('Booking created successfully!')
-      setShowBookingForm(false)
-      
-      // Redirect to ticket page or show ticket details
+      const response = await customerAPI.createGuestBooking(bookingData)
       const booking = response.data.data
-      toast.success(`Booking Reference: ${booking.bookingReference}`)
       
-      // Show download option immediately
-      if (window.confirm('Booking created successfully! Would you like to download the ticket now?')) {
-        handleDownloadTicket(booking.id)
-      }
+      setCompletedBooking(booking)
+      setBookingComplete(true)
+      setShowBookingModal(false)
       
-      // Refresh bookings and schedules
-      fetchBookings()
-      await handleSearch({ preventDefault: () => {} })
+      toast.success('Booking created successfully!')
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to create booking')
     }
@@ -166,11 +145,7 @@ const AgentBookingManagement = () => {
 
   const handleDownloadTicket = async (bookingId) => {
     try {
-      const response = await fetch(`http://localhost:8080/api/tickets/download/${bookingId}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      })
+      const response = await fetch(`http://localhost:8080/api/tickets/download/${bookingId}`)
       
       if (!response.ok) {
         throw new Error('Failed to download ticket')
@@ -181,7 +156,7 @@ const AgentBookingManagement = () => {
       const a = document.createElement('a')
       a.style.display = 'none'
       a.href = url
-      a.download = `ticket_${bookings.find(b => b.id === bookingId)?.bookingReference}.pdf`
+      a.download = `ticket_${completedBooking?.bookingReference}.pdf`
       document.body.appendChild(a)
       a.click()
       window.URL.revokeObjectURL(url)
@@ -193,48 +168,78 @@ const AgentBookingManagement = () => {
     }
   }
 
-  const getStatusBadge = (status) => {
-    const baseClasses = "px-2 py-1 text-xs font-medium rounded-full"
-    switch (status) {
-      case 'CONFIRMED':
-        return `${baseClasses} bg-green-100 text-green-800`
-      case 'PENDING':
-        return `${baseClasses} bg-yellow-100 text-yellow-800`
-      case 'CANCELLED':
-        return `${baseClasses} bg-red-100 text-red-800`
-      case 'COMPLETED':
-        return `${baseClasses} bg-blue-100 text-blue-800`
-      default:
-        return `${baseClasses} bg-gray-100 text-gray-800`
-    }
-  }
-
   const originPoints = selectedSchedule ? routePoints[selectedSchedule.agencyRoute.route.origin.id] || [] : []
   const destinationPoints = selectedSchedule ? routePoints[selectedSchedule.agencyRoute.route.destination.id] || [] : []
+
+  if (bookingComplete && completedBooking) {
+    return (
+      <div className="px-4 sm:px-6 lg:px-8 fade-in">
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+            <div className="mb-6">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="h-8 w-8 text-green-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Booking Successful!</h2>
+              <p className="text-gray-600">Your ticket has been booked successfully</p>
+            </div>
+
+            <div className="bg-gray-50 rounded-lg p-6 mb-6">
+              <h3 className="font-semibold text-gray-900 mb-4">Booking Details</h3>
+              <div className="text-left space-y-2 text-sm">
+                <p><strong>Booking Reference:</strong> {completedBooking.bookingReference}</p>
+                <p><strong>Passenger:</strong> {completedBooking.customer.firstName} {completedBooking.customer.lastName}</p>
+                <p><strong>Route:</strong> {completedBooking.schedule.agencyRoute.route.origin.name} → {completedBooking.schedule.agencyRoute.route.destination.name}</p>
+                <p><strong>Date:</strong> {completedBooking.schedule.departureDate}</p>
+                <p><strong>Time:</strong> {completedBooking.schedule.departureTime} - {completedBooking.schedule.arrivalTime}</p>
+                <p><strong>Seats:</strong> {completedBooking.numberOfSeats}</p>
+                <p><strong>Total:</strong> {completedBooking.totalAmount} RWF</p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <button
+                onClick={() => handleDownloadTicket(completedBooking.id)}
+                className="btn-primary w-full"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Download Ticket
+              </button>
+              
+              <button
+                onClick={() => {
+                  setBookingComplete(false)
+                  setCompletedBooking(null)
+                }}
+                className="btn-outline w-full"
+              >
+                Book Another Ticket
+              </button>
+            </div>
+
+            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+              <p className="text-sm text-blue-800">
+                <strong>Important:</strong> Save your booking reference <strong>{completedBooking.bookingReference}</strong> 
+                and download your ticket. You can use the booking reference to find your ticket later.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 fade-in">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Booking Management</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Book Without Account</h1>
         <p className="mt-2 text-gray-600">
-          Create bookings for walk-in customers and manage existing bookings
+          Book your bus ticket quickly without creating an account
         </p>
       </div>
 
       {/* Search Form */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">Search Available Schedules</h2>
-          <button
-            onClick={() => setShowBookingForm(true)}
-            className="btn-primary"
-            disabled={!selectedSchedule}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            New Booking
-          </button>
-        </div>
-        
         <form onSubmit={handleSearch}>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
@@ -308,7 +313,7 @@ const AgentBookingManagement = () => {
       </div>
 
       {/* Available Schedules */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-8">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         <div className="p-6 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900">Available Schedules</h2>
         </div>
@@ -317,20 +322,12 @@ const AgentBookingManagement = () => {
           {schedules.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <Search className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-              <p>Search for schedules to create bookings</p>
+              <p>Search for schedules to book your ticket</p>
             </div>
           ) : (
             <div className="space-y-4">
               {schedules.map((schedule) => (
-                <div 
-                  key={schedule.id} 
-                  className={`border rounded-lg p-6 cursor-pointer transition-colors ${
-                    selectedSchedule?.id === schedule.id
-                      ? 'border-primary-500 bg-primary-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                  onClick={() => setSelectedSchedule(schedule)}
-                >
+                <div key={schedule.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <div className="flex items-center mb-2">
@@ -369,10 +366,7 @@ const AgentBookingManagement = () => {
                         {schedule.agencyRoute.price} RWF
                       </div>
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleBookTicket(schedule)
-                        }}
+                        onClick={() => handleBookTicket(schedule)}
                         disabled={schedule.availableSeats === 0}
                         className={`btn-primary ${
                           schedule.availableSeats === 0 
@@ -392,23 +386,24 @@ const AgentBookingManagement = () => {
         </div>
       </div>
 
-      {/* Booking Form Modal */}
-      {showBookingForm && selectedSchedule && (
+      {/* Guest Booking Modal */}
+      {showBookingModal && selectedSchedule && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold">Create Booking</h3>
+              <h3 className="text-lg font-semibold">Book Your Ticket</h3>
               <button
-                onClick={() => setShowBookingForm(false)}
+                onClick={() => setShowBookingModal(false)}
                 className="text-gray-400 hover:text-gray-600"
               >
-                <X className="h-5 w-5" />
+                ×
               </button>
             </div>
 
             <div className="mb-4 p-4 bg-gray-50 rounded-lg">
               <h4 className="font-medium text-gray-900 mb-2">Journey Details</h4>
               <div className="text-sm text-gray-600 space-y-1">
+                <p><strong>Agency:</strong> {selectedSchedule.agencyRoute.agency.agencyName}</p>
                 <p><strong>Route:</strong> {selectedSchedule.agencyRoute.route.origin.name} → {selectedSchedule.agencyRoute.route.destination.name}</p>
                 <p><strong>Date:</strong> {selectedSchedule.departureDate}</p>
                 <p><strong>Time:</strong> {selectedSchedule.departureTime} - {selectedSchedule.arrivalTime}</p>
@@ -417,17 +412,18 @@ const AgentBookingManagement = () => {
               </div>
             </div>
 
-            <form onSubmit={handleCreateBooking}>
+            <form onSubmit={handleCreateGuestBooking}>
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <User className="h-4 w-4 inline mr-1" />
                       First Name *
                     </label>
                     <input
                       type="text"
-                      value={bookingForm.customerFirstName}
-                      onChange={(e) => setBookingForm({ ...bookingForm, customerFirstName: e.target.value })}
+                      value={bookingForm.firstName}
+                      onChange={(e) => setBookingForm({ ...bookingForm, firstName: e.target.value })}
                       className="input w-full"
                       required
                     />
@@ -438,8 +434,8 @@ const AgentBookingManagement = () => {
                     </label>
                     <input
                       type="text"
-                      value={bookingForm.customerLastName}
-                      onChange={(e) => setBookingForm({ ...bookingForm, customerLastName: e.target.value })}
+                      value={bookingForm.lastName}
+                      onChange={(e) => setBookingForm({ ...bookingForm, lastName: e.target.value })}
                       className="input w-full"
                       required
                     />
@@ -448,12 +444,13 @@ const AgentBookingManagement = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <Phone className="h-4 w-4 inline mr-1" />
                     Phone Number *
                   </label>
                   <input
                     type="tel"
-                    value={bookingForm.customerPhoneNumber}
-                    onChange={(e) => setBookingForm({ ...bookingForm, customerPhoneNumber: e.target.value })}
+                    value={bookingForm.phoneNumber}
+                    onChange={(e) => setBookingForm({ ...bookingForm, phoneNumber: e.target.value })}
                     className="input w-full"
                     required
                   />
@@ -461,13 +458,15 @@ const AgentBookingManagement = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <Mail className="h-4 w-4 inline mr-1" />
                     Email (Optional)
                   </label>
                   <input
                     type="email"
-                    value={bookingForm.customerEmail}
-                    onChange={(e) => setBookingForm({ ...bookingForm, customerEmail: e.target.value })}
+                    value={bookingForm.email}
+                    onChange={(e) => setBookingForm({ ...bookingForm, email: e.target.value })}
                     className="input w-full"
+                    placeholder="For booking confirmations"
                   />
                 </div>
 
@@ -537,12 +536,11 @@ const AgentBookingManagement = () => {
 
               <div className="flex space-x-3 mt-6">
                 <button type="submit" className="btn-primary flex-1">
-                  <Save className="h-4 w-4 mr-2" />
-                  Create Booking
+                  Confirm Booking
                 </button>
                 <button
                   type="button"
-                  onClick={() => setShowBookingForm(false)}
+                  onClick={() => setShowBookingModal(false)}
                   className="btn-secondary flex-1"
                 >
                   Cancel
@@ -556,4 +554,4 @@ const AgentBookingManagement = () => {
   )
 }
 
-export default AgentBookingManagement
+export default GuestBooking

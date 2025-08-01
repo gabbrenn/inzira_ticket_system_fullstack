@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Search, MapPin, Calendar, Clock, Users, ArrowRight, Download } from 'lucide-react'
+import { Search, MapPin, Calendar, Clock, Users, ArrowRight, Download, Filter, DollarSign } from 'lucide-react'
 import { customerAPI } from '../../services/api'
 import { useAuth } from '../../contexts/AuthContext'
 import toast from 'react-hot-toast'
@@ -12,6 +12,13 @@ const SearchSchedules = () => {
   const [searching, setSearching] = useState(false)
   const [showBookingModal, setShowBookingModal] = useState(false)
   const [selectedSchedule, setSelectedSchedule] = useState(null)
+  const [filteredSchedules, setFilteredSchedules] = useState([])
+  const [filters, setFilters] = useState({
+    agency: '',
+    minPrice: '',
+    maxPrice: '',
+    departureTime: ''
+  })
   const { user } = useAuth()
 
   const [searchForm, setSearchForm] = useState({
@@ -85,6 +92,13 @@ const SearchSchedules = () => {
       if (response.data.data.length === 0) {
         toast.info('No schedules found for your search criteria')
       } else {
+        // Sort schedules by departure time (newest first)
+        const sortedSchedules = response.data.data.sort((a, b) => 
+          new Date(`${b.departureDate}T${b.departureTime}`) - new Date(`${a.departureDate}T${a.departureTime}`)
+        )
+        setSchedules(sortedSchedules)
+        setFilteredSchedules(sortedSchedules)
+        
         // Fetch route points for origin and destination
         await fetchRoutePoints(searchForm.originId)
         await fetchRoutePoints(searchForm.destinationId)
@@ -93,6 +107,7 @@ const SearchSchedules = () => {
       console.error('Search error:', error)
       toast.error('Failed to search schedules. Please try again.')
       setSchedules([])
+      setFilteredSchedules([])
     } finally {
       setSearching(false)
     }
@@ -243,99 +258,176 @@ const SearchSchedules = () => {
         </form>
       </div>
 
-      {/* Search Results */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">
-            Available Schedules
-            {searchForm.originId && searchForm.destinationId && (
-              <span className="text-sm font-normal text-gray-500 ml-2">
-                {getOriginDistrict(searchForm.originId)} → {getDestinationDistrict(searchForm.destinationId)}
-              </span>
-            )}
-          </h2>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        {/* Filters Sidebar */}
+        <div className="lg:col-span-1">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sticky top-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+              <Filter className="h-5 w-5 mr-2" />
+              Filters
+            </h3>
+            
+            {/* Agency Filter */}
+            <div className="mb-6">
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h4 className="font-medium text-gray-900 mb-3">Agency</h4>
+                <input
+                  type="text"
+                  placeholder="Search by agency name..."
+                  value={filters.agency}
+                  onChange={(e) => setFilters({ ...filters, agency: e.target.value })}
+                  className="input w-full"
+                />
+              </div>
+            </div>
+            
+            {/* Price Filter */}
+            <div className="mb-6">
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h4 className="font-medium text-gray-900 mb-3 flex items-center">
+                  <DollarSign className="h-4 w-4 mr-1" />
+                  Price Range (RWF)
+                </h4>
+                <div className="space-y-3">
+                  <input
+                    type="number"
+                    placeholder="Min price"
+                    value={filters.minPrice}
+                    onChange={(e) => setFilters({ ...filters, minPrice: e.target.value })}
+                    className="input w-full"
+                  />
+                  <input
+                    type="number"
+                    placeholder="Max price"
+                    value={filters.maxPrice}
+                    onChange={(e) => setFilters({ ...filters, maxPrice: e.target.value })}
+                    className="input w-full"
+                  />
+                </div>
+              </div>
+            </div>
+            
+            {/* Departure Time Filter */}
+            <div className="mb-6">
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h4 className="font-medium text-gray-900 mb-3 flex items-center">
+                  <Clock className="h-4 w-4 mr-1" />
+                  Departure Time
+                </h4>
+                <input
+                  type="time"
+                  value={filters.departureTime}
+                  onChange={(e) => setFilters({ ...filters, departureTime: e.target.value })}
+                  className="input w-full"
+                />
+              </div>
+            </div>
+            
+            <button
+              onClick={() => setFilters({ agency: '', minPrice: '', maxPrice: '', departureTime: '' })}
+              className="btn-outline w-full"
+            >
+              Clear Filters
+            </button>
+          </div>
         </div>
 
-        <div className="p-6">
-          {!searchForm.originId || !searchForm.destinationId ? (
-            <div className="text-center py-8 text-gray-500">
-              <Search className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-              <p>Enter your travel details above to search for available schedules</p>
+        {/* Search Results */}
+        <div className="lg:col-span-3">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">
+                Available Schedules ({filteredSchedules.length})
+                {searchForm.originId && searchForm.destinationId && (
+                  <span className="text-sm font-normal text-gray-500 ml-2">
+                    {getOriginDistrict(searchForm.originId)} → {getDestinationDistrict(searchForm.destinationId)}
+                  </span>
+                )}
+              </h2>
             </div>
-          ) : searching ? (
-            <div className="text-center py-8">
-              <div className="loading-spinner mx-auto mb-4"></div>
-              <p className="text-gray-500">Searching for schedules...</p>
-            </div>
-          ) : schedules.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-              <p>No schedules found for your search criteria</p>
-              <p className="text-sm mt-2">Try searching for a different date or route</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {schedules.map((schedule) => (
-                <div key={schedule.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center mb-2">
-                        <div className="text-lg font-semibold text-gray-900">
-                          {schedule.agencyRoute.agency.agencyName}
-                        </div>
-                        <span className="ml-3 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                          {schedule.bus.busType}
-                        </span>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm text-gray-600">
-                        <div className="flex items-center">
-                          <MapPin className="h-4 w-4 mr-1" />
-                          <span>
-                            {schedule.agencyRoute.route.origin.name} → {schedule.agencyRoute.route.destination.name}
-                          </span>
-                        </div>
-                        <div className="flex items-center">
-                          <Calendar className="h-4 w-4 mr-1" />
-                          <span>{schedule.departureDate}</span>
-                        </div>
-                        <div className="flex items-center">
-                          <Clock className="h-4 w-4 mr-1" />
-                          <span>{schedule.departureTime} - {schedule.arrivalTime}</span>
-                        </div>
-                        <div className="flex items-center">
-                          <Users className="h-4 w-4 mr-1" />
-                          <span>{schedule.availableSeats} seats available</span>
-                        </div>
-                      </div>
 
-                      <div className="mt-3 text-sm text-gray-600">
-                        <span className="font-medium">Bus:</span> {schedule.bus.plateNumber} ({schedule.bus.capacity} seats)
-                      </div>
-                    </div>
-
-                    <div className="ml-6 text-right">
-                      <div className="text-2xl font-bold text-primary-600 mb-2">
-                        {schedule.agencyRoute.price} RWF
-                      </div>
-                      <button
-                        onClick={() => handleBookTicket(schedule)}
-                        disabled={schedule.availableSeats === 0}
-                        className={`btn-primary ${
-                          schedule.availableSeats === 0 
-                            ? 'opacity-50 cursor-not-allowed' 
-                            : ''
-                        }`}
-                      >
-                        {schedule.availableSeats === 0 ? 'Sold Out' : 'Book Now'}
-                        {schedule.availableSeats > 0 && <ArrowRight className="h-4 w-4 ml-2" />}
-                      </button>
-                    </div>
-                  </div>
+            <div className="p-6">
+              {!searchForm.originId || !searchForm.destinationId ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Search className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <p>Enter your travel details above to search for available schedules</p>
                 </div>
-              ))}
+              ) : searching ? (
+                <div className="text-center py-8">
+                  <div className="loading-spinner mx-auto mb-4"></div>
+                  <p className="text-gray-500">Searching for schedules...</p>
+                </div>
+              ) : filteredSchedules.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <p>No schedules found for your search criteria</p>
+                  <p className="text-sm mt-2">Try adjusting your filters or search for a different date or route</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {filteredSchedules.map((schedule) => (
+                    <div key={schedule.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center mb-2">
+                            <div className="text-lg font-semibold text-gray-900">
+                              {schedule.agencyRoute.agency.agencyName}
+                            </div>
+                            <span className="ml-3 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                              {schedule.bus.busType}
+                            </span>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm text-gray-600">
+                            <div className="flex items-center">
+                              <MapPin className="h-4 w-4 mr-1" />
+                              <span>
+                                {schedule.agencyRoute.route.origin.name} → {schedule.agencyRoute.route.destination.name}
+                              </span>
+                            </div>
+                            <div className="flex items-center">
+                              <Calendar className="h-4 w-4 mr-1" />
+                              <span>{schedule.departureDate}</span>
+                            </div>
+                            <div className="flex items-center">
+                              <Clock className="h-4 w-4 mr-1" />
+                              <span>{schedule.departureTime} - {schedule.arrivalTime}</span>
+                            </div>
+                            <div className="flex items-center">
+                              <Users className="h-4 w-4 mr-1" />
+                              <span>{schedule.availableSeats} seats available</span>
+                            </div>
+                          </div>
+
+                          <div className="mt-3 text-sm text-gray-600">
+                            <span className="font-medium">Bus:</span> {schedule.bus.plateNumber} ({schedule.bus.capacity} seats)
+                          </div>
+                        </div>
+
+                        <div className="ml-6 text-right">
+                          <div className="text-2xl font-bold text-primary-600 mb-2">
+                            {schedule.agencyRoute.price} RWF
+                          </div>
+                          <button
+                            onClick={() => handleBookTicket(schedule)}
+                            disabled={schedule.availableSeats === 0}
+                            className={`btn-primary ${
+                              schedule.availableSeats === 0 
+                                ? 'opacity-50 cursor-not-allowed' 
+                                : ''
+                            }`}
+                          >
+                            {schedule.availableSeats === 0 ? 'Sold Out' : 'Book Now'}
+                            {schedule.availableSeats > 0 && <ArrowRight className="h-4 w-4 ml-2" />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </div>
 

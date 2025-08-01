@@ -11,6 +11,7 @@ const Layout = ({ children }) => {
   
   const navigation = [
     { name: 'Home', href: '/', icon: Home, public: true },
+    { name: 'Book Ticket', href: '/guest-booking', icon: Calendar, public: true },
     { name: 'Admin Panel', href: '/admin', icon: Settings, role: 'ADMIN' },
     { name: 'Agency Panel', href: '/agency', icon: Bus, role: 'AGENCY' },
     { name: 'Branch Manager', href: '/branch-manager', icon: Building2, role: 'BRANCH_MANAGER' },
