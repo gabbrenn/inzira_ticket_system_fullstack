@@ -298,6 +298,7 @@ const AgencyManagement = () => {
                     onChange={(e) => setAgencyForm({ ...agencyForm, email: e.target.value })}
                     className="input w-full"
                     required
+                    />
                 </div>
 
                 <div>

@@ -31,7 +31,6 @@ const AgentDashboard = () => {
     try {
       setLoading(true)
       const response = await agentAPI.getBookingsByAgent(user.roleEntityId)
-      // Get only the 5 most recent bookings
       const bookings = response.data.data || []
       setRecentBookings(bookings.slice(0, 5))
     } catch (error) {
@@ -214,6 +213,15 @@ const AgentDashboard = () => {
                       </div>
                       <span className={getStatusBadge(booking.status)}>
                         {booking.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

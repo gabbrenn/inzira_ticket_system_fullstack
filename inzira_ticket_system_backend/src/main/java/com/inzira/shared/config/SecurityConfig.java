@@ -45,11 +45,11 @@ public class SecurityConfig {
                 .requestMatchers("/error").permitAll()
                 
                 // Shared endpoints that multiple roles can access - MUST come before /api/admin/**
-                .requestMatchers("/api/admin/districts").hasAnyRole("ADMIN", "CUSTOMER", "AGENCY","AGENT")
-                .requestMatchers("/api/admin/districts/**").hasAnyRole("ADMIN", "CUSTOMER", "AGENCY","AGENT")
+                .requestMatchers("/api/admin/districts").permitAll()
+                .requestMatchers("/api/admin/districts/**").permitAll()
                 .requestMatchers("/api/admin/routes").hasAnyRole("ADMIN", "AGENCY","AGENT")
                 .requestMatchers("/api/admin/routes/**").hasAnyRole("ADMIN", "AGENCY")
-                .requestMatchers("/api/agency/schedules/**").hasAnyRole("CUSTOMER", "AGENCY", "AGENT")
+                .requestMatchers("/api/agency/schedules/**").permitAll()
     
                 
                 // Admin endpoints
@@ -65,8 +65,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/agent/**").hasRole("AGENT")
                 
                 // Customer endpoints
-                .requestMatchers("/api/customers/**").hasAnyRole("CUSTOMER", "ADMIN")
-                .requestMatchers("/api/bookings/**").hasAnyRole("CUSTOMER", "ADMIN", "AGENCY", "AGENT")
+                .requestMatchers("/api/customers/**").permitAll()
+                .requestMatchers("/api/bookings/**").permitAll()
                 .requestMatchers("/api/tickets/**").hasAnyRole("CUSTOMER", "ADMIN", "AGENCY", "AGENT")
                 
                 // All other requests need authentication
