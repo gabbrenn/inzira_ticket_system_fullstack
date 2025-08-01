@@ -133,6 +133,7 @@ export const agencyAPI = {
   getAgencyRoutes: () => api.get('/agency/routes'),
   getAgencyRoute: (id) => api.get(`/agency/routes/${id}`),
   getRoutesByAgency: (agencyId) => api.get(`/agency/routes/agency/${agencyId}`),
+  updateAgencyRoute: (id, data) => api.put(`/agency/routes/${id}`, data),
   deleteAgencyRoute: (id) => api.delete(`/agency/routes/${id}`),
   
   // Schedule management
@@ -225,6 +226,9 @@ export const customerAPI = {
   getRoutePoints: (districtId) => sharedAPI.getRoutePoints(districtId),
   searchSchedules: (params) => sharedAPI.searchSchedules(params),
   
+  // Guest booking
+  createGuestBooking: (data) => api.post('/guest/bookings', data),
+  
   // Agent booking functionality
   createAgentBooking: (data) => api.post('/agent/bookings', data),
   getBookingsByAgent: (agentId) => api.get(`/agent/bookings/agent/${agentId}`),
@@ -265,9 +269,9 @@ export const branchManagerAPI = {
   deleteSchedule: (id) => api.delete(`/agency/schedules/${id}`),
   
   // Access to agency resources
-  getAgencyRoutes: () => api.get('/agency/routes'),
-  getBuses: () => api.get('/agency/buses'),
-  getDrivers: () => api.get('/agency/drivers'),
+  getAgencyRoutes: (agencyId) => api.get(`/agency/routes/agency/${agencyId}`),
+  getBuses: (agencyId) => api.get(`/agency/buses/agency/${agencyId}`),
+  getDrivers: (agencyId) => api.get(`/agency/drivers/agency/${agencyId}`),
 }
 
 // Agent APIs
