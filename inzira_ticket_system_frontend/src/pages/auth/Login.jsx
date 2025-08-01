@@ -191,14 +191,8 @@ const Login = () => {
 
             <div className="mt-6 grid grid-cols-2 gap-3">
               <Link
-                to="/register/admin"
-                className="btn-outline w-full text-center"
-              >
-                Register as Admin
-              </Link>
-              <Link
                 to="/register/customer"
-                className="btn-outline w-full text-center"
+                className="btn-outline w-full text-center col-span-2"
               >
                 Register as Customer
               </Link>

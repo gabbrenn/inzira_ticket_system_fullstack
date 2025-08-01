@@ -64,11 +64,17 @@ const Home = () => {
             </p>
             <div className="flex justify-center space-x-4">
               <Link
-                to="/customer/search"
+                to="/guest-booking"
                 className="btn-primary text-lg px-8 py-3 rounded-lg hover:bg-primary-700 transition-colors"
               >
                 Book a Ticket
                 <ArrowRight className="ml-2 h-5 w-5" />
+              </Link>
+              <Link
+                to="/customer/search"
+                className="btn-outline text-lg px-8 py-3 rounded-lg hover:bg-gray-100 transition-colors text-white border-white hover:text-gray-900"
+              >
+                Book with Account
               </Link>
             </div>
           </div>
@@ -172,6 +178,22 @@ const Home = () => {
               <div className="text-primary-200">Customer Support</div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Booking Reference Search Section */}
+      <div className="py-16 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Find Your Booking
+            </h2>
+            <p className="text-lg text-gray-600">
+              Lost your ticket? Search by booking reference to download it again
+            </p>
+          </div>
+          
+          <BookingReferenceSearch />
         </div>
       </div>
     </div>

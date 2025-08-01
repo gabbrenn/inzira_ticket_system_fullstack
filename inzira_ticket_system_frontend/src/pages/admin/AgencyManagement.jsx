@@ -298,7 +298,6 @@ const AgencyManagement = () => {
                     onChange={(e) => setAgencyForm({ ...agencyForm, email: e.target.value })}
                     className="input w-full"
                     required
-                  />
                 </div>
 
                 <div>
@@ -341,24 +340,6 @@ const AgencyManagement = () => {
                     <option value="INACTIVE">Inactive</option>
                   </select>
                 </div>
-
-                {!editingAgency && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Password
-                    </label>
-                    <input
-                      type="password"
-                      value={agencyForm.password}
-                      onChange={(e) => setAgencyForm({ ...agencyForm, password: e.target.value })}
-                      className="input w-full"
-                      placeholder="Leave empty for auto-generated password"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      If left empty, a password will be generated automatically
-                    </p>
-                  </div>
-                )}
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">

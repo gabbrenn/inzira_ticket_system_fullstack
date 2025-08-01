@@ -3,6 +3,7 @@ import { Search, Calendar, MapPin, Clock, CreditCard, Download, X, CheckCircle, 
 import { customerAPI } from '../../services/api'
 import { useAuth } from '../../contexts/AuthContext'
 import toast from 'react-hot-toast'
+import Pagination from '../../components/Pagination'
 
 const BookingManagement = () => {
   const [bookings, setBookings] = useState([])
@@ -11,6 +12,8 @@ const BookingManagement = () => {
   const [statusFilter, setStatusFilter] = useState('ALL')
   const [showQRModal, setShowQRModal] = useState(false)
   const [selectedBooking, setSelectedBooking] = useState(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage] = useState(10)
   const { user } = useAuth()
 
   useEffect(() => {
@@ -125,7 +128,12 @@ const BookingManagement = () => {
     const matchesStatus = statusFilter === 'ALL' || booking.status === statusFilter
     
     return matchesSearch && matchesStatus
-  })
+  }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) // Sort newest first
+
+  // Pagination
+  const totalPages = Math.ceil(filteredBookings.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const paginatedBookings = filteredBookings.slice(startIndex, startIndex + itemsPerPage)
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 fade-in">
@@ -208,7 +216,7 @@ const BookingManagement = () => {
             </div>
           ) : (
             <div className="space-y-6">
-              {filteredBookings.map((booking) => (
+              {paginatedBookings.map((booking) => (
                 <div key={booking.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
                   <div className="flex items-start justify-between mb-4">
                     <div>
@@ -311,6 +319,15 @@ const BookingManagement = () => {
             </div>
           )}
         </div>
+        
+        {/* Pagination */}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          itemsPerPage={itemsPerPage}
+          totalItems={filteredBookings.length}
+        />
       </div>
 
       {/* QR Code Modal */}

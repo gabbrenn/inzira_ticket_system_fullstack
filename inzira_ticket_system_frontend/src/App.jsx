@@ -31,6 +31,7 @@ import AgencyRouteManagement from './pages/agency/AgencyRouteManagement'
 import CustomerDashboard from './pages/customer/CustomerDashboard'
 import BookingManagement from './pages/customer/BookingManagement'
 import SearchSchedules from './pages/customer/SearchSchedules'
+import GuestBooking from './pages/customer/GuestBooking'
 
 // Branch Manager pages
 import BranchManagerDashboard from './pages/branch_manager/BranchManagerDashboard'
@@ -55,6 +56,7 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register/:role" element={<Register />} />
+              <Route path="/guest-booking" element={<GuestBooking />} />
               <Route path="/unauthorized" element={<Unauthorized />} />
               
               {/* Admin Routes */}

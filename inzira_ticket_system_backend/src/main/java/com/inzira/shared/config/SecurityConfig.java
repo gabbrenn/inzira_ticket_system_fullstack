@@ -38,8 +38,10 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints - allow all
                 .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/guest/**").permitAll()
                 .requestMatchers("/uploads/**").permitAll()
                 .requestMatchers("/api/tickets/verify/**").permitAll()
+                .requestMatchers("/api/tickets/download/**").permitAll()
                 .requestMatchers("/error").permitAll()
                 
                 // Shared endpoints that multiple roles can access - MUST come before /api/admin/**
