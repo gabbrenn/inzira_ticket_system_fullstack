@@ -4,7 +4,6 @@ import { customerAPI } from '../../services/api'
 import { useAuth } from '../../contexts/AuthContext'
 import { Navigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { CheckCircle } from 'lucide-react'
 
 
 const GuestBooking = () => {
