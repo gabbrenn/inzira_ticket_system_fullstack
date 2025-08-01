@@ -23,84 +23,138 @@ public class PDFTicketService {
 
     public String generateTicketPDF(Booking booking) {
         try {
-            // Create PDF document
-            Document document = new Document(PageSize.A4);
+            // Create PDF document with custom page size for thermal printing
+            Rectangle pageSize = new Rectangle(226, 340); // 80mm x 120mm in points
+            Document document = new Document(pageSize, 10, 10, 10, 10); // Small margins
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             PdfWriter writer = PdfWriter.getInstance(document, baos);
             
             document.open();
 
-            // Add title
-            Font titleFont = new Font(Font.FontFamily.HELVETICA, 24, Font.BOLD, BaseColor.BLUE);
-            Paragraph title = new Paragraph("INZIRA BUS TICKET", titleFont);
-            title.setAlignment(Element.ALIGN_CENTER);
-            title.setSpacingAfter(20);
-            document.add(title);
+            // Define fonts for thermal printing
+            Font titleFont = new Font(Font.FontFamily.HELVETICA, 12, Font.BOLD, BaseColor.BLACK);
+            Font headerFont = new Font(Font.FontFamily.HELVETICA, 8, Font.BOLD, BaseColor.BLACK);
+            Font normalFont = new Font(Font.FontFamily.HELVETICA, 7, Font.NORMAL, BaseColor.BLACK);
+            Font smallFont = new Font(Font.FontFamily.HELVETICA, 6, Font.NORMAL, BaseColor.BLACK);
 
-            // Add agency logo if available
+            // Add header with logo and title
+            PdfPTable headerTable = new PdfPTable(2);
+            headerTable.setWidthPercentage(100);
+            headerTable.setWidths(new float[]{1, 2});
+
+            // Logo cell
+            PdfPCell logoCell = new PdfPCell();
+            logoCell.setBorder(Rectangle.NO_BORDER);
+            logoCell.setPadding(0);
+            
             if (booking.getSchedule().getAgencyRoute().getAgency().getLogoPath() != null) {
                 try {
                     String logoPath = "uploads/" + booking.getSchedule().getAgencyRoute().getAgency().getLogoPath();
                     if (Files.exists(Paths.get(logoPath))) {
                         Image logo = Image.getInstance(logoPath);
-                        logo.scaleToFit(100, 100);
-                        logo.setAlignment(Element.ALIGN_CENTER);
-                        document.add(logo);
-                        document.add(new Paragraph(" ")); // Space
+                        logo.scaleToFit(30, 30);
+                        logoCell.addElement(logo);
                     }
                 } catch (Exception e) {
-                    // Logo loading failed, continue without it
+                    // Logo loading failed, add placeholder
+                    Paragraph logoPlaceholder = new Paragraph("LOGO", smallFont);
+                    logoCell.addElement(logoPlaceholder);
                 }
+            } else {
+                Paragraph logoPlaceholder = new Paragraph("LOGO", smallFont);
+                logoCell.addElement(logoPlaceholder);
             }
+            headerTable.addCell(logoCell);
 
-            // Add booking details
-            Font headerFont = new Font(Font.FontFamily.HELVETICA, 14, Font.BOLD);
-            Font normalFont = new Font(Font.FontFamily.HELVETICA, 12);
+            // Title cell
+            PdfPCell titleCell = new PdfPCell();
+            titleCell.setBorder(Rectangle.NO_BORDER);
+            titleCell.setPadding(0);
+            Paragraph title = new Paragraph("INZIRA BUS TICKET", titleFont);
+            title.setAlignment(Element.ALIGN_CENTER);
+            titleCell.addElement(title);
+            Paragraph agencyName = new Paragraph(booking.getSchedule().getAgencyRoute().getAgency().getAgencyName(), normalFont);
+            agencyName.setAlignment(Element.ALIGN_CENTER);
+            titleCell.addElement(agencyName);
+            headerTable.addCell(titleCell);
+            
+            document.add(headerTable);
+            document.add(new Paragraph(" ", smallFont)); // Small space
 
-            // Booking Reference
-            document.add(new Paragraph("Booking Reference: " + booking.getBookingReference(), headerFont));
-            document.add(new Paragraph(" "));
+            // Booking Reference (prominent)
+            Paragraph refParagraph = new Paragraph("REF: " + booking.getBookingReference(), headerFont);
+            refParagraph.setAlignment(Element.ALIGN_CENTER);
+            document.add(refParagraph);
+            document.add(new Paragraph(" ", smallFont));
 
-            // Customer Details
-            document.add(new Paragraph("Passenger Details:", headerFont));
-            document.add(new Paragraph("Name: " + booking.getCustomer().getFirstName() + " " + booking.getCustomer().getLastName(), normalFont));
-            document.add(new Paragraph("Email: " + booking.getCustomer().getEmail(), normalFont));
-            document.add(new Paragraph("Phone: " + booking.getCustomer().getPhoneNumber(), normalFont));
-            document.add(new Paragraph(" "));
+            // Journey details in compact format
+            PdfPTable journeyTable = new PdfPTable(2);
+            journeyTable.setWidthPercentage(100);
+            journeyTable.setWidths(new float[]{1, 1});
 
-            // Journey Details
-            document.add(new Paragraph("Journey Details:", headerFont));
-            document.add(new Paragraph("Agency: " + booking.getSchedule().getAgencyRoute().getAgency().getAgencyName(), normalFont));
-            document.add(new Paragraph("Route: " + booking.getSchedule().getAgencyRoute().getRoute().getOrigin().getName() + 
-                    " → " + booking.getSchedule().getAgencyRoute().getRoute().getDestination().getName(), normalFont));
-            document.add(new Paragraph("Pickup Point: " + booking.getPickupPoint().getName(), normalFont));
-            document.add(new Paragraph("Drop Point: " + booking.getDropPoint().getName(), normalFont));
-            document.add(new Paragraph("Date: " + booking.getSchedule().getDepartureDate(), normalFont));
-            document.add(new Paragraph("Departure Time: " + booking.getSchedule().getDepartureTime(), normalFont));
-            document.add(new Paragraph("Arrival Time: " + booking.getSchedule().getArrivalTime(), normalFont));
-            document.add(new Paragraph("Bus: " + booking.getSchedule().getBus().getPlateNumber() + " (" + booking.getSchedule().getBus().getBusType() + ")", normalFont));
-            document.add(new Paragraph("Number of Seats: " + booking.getNumberOfSeats(), normalFont));
-            document.add(new Paragraph("Total Amount: " + booking.getTotalAmount() + " RWF", headerFont));
-            document.add(new Paragraph(" "));
+            // Route
+            addTableRow(journeyTable, "ROUTE:", 
+                booking.getSchedule().getAgencyRoute().getRoute().getOrigin().getName() + " → " + 
+                booking.getSchedule().getAgencyRoute().getRoute().getDestination().getName(), 
+                normalFont, smallFont);
 
+            // Date and Time
+            addTableRow(journeyTable, "DATE:", booking.getSchedule().getDepartureDate().toString(), normalFont, smallFont);
+            addTableRow(journeyTable, "TIME:", booking.getSchedule().getDepartureTime() + " - " + booking.getSchedule().getArrivalTime(), normalFont, smallFont);
+
+            // Pickup and Drop
+            addTableRow(journeyTable, "PICKUP:", booking.getPickupPoint().getName(), normalFont, smallFont);
+            addTableRow(journeyTable, "DROP:", booking.getDropPoint().getName(), normalFont, smallFont);
+
+            // Bus and Seats
+            addTableRow(journeyTable, "BUS:", booking.getSchedule().getBus().getPlateNumber() + " (" + booking.getSchedule().getBus().getBusType() + ")", normalFont, smallFont);
+            addTableRow(journeyTable, "SEATS:", booking.getNumberOfSeats().toString(), normalFont, smallFont);
+
+            document.add(journeyTable);
+            document.add(new Paragraph(" ", smallFont));
+
+            // Passenger details
+            Paragraph passengerHeader = new Paragraph("PASSENGER:", headerFont);
+            document.add(passengerHeader);
+            Paragraph passengerName = new Paragraph(booking.getCustomer().getFirstName() + " " + booking.getCustomer().getLastName(), normalFont);
+            document.add(passengerName);
+            if (booking.getCustomer().getPhoneNumber() != null) {
+                Paragraph passengerPhone = new Paragraph("Tel: " + booking.getCustomer().getPhoneNumber(), smallFont);
+                document.add(passengerPhone);
+            }
+            document.add(new Paragraph(" ", smallFont));
+
+            // Total amount (prominent)
+            Paragraph totalAmount = new Paragraph("TOTAL: " + booking.getTotalAmount() + " RWF", titleFont);
+            totalAmount.setAlignment(Element.ALIGN_CENTER);
+            document.add(totalAmount);
+            document.add(new Paragraph(" ", smallFont));
             // Add QR Code
             if (booking.getQrCode() != null) {
                 try {
                     byte[] qrCodeBytes = Base64.getDecoder().decode(booking.getQrCode());
                     Image qrImage = Image.getInstance(qrCodeBytes);
-                    qrImage.scaleToFit(150, 150);
+                    qrImage.scaleToFit(60, 60); // Smaller QR code for thermal printing
                     qrImage.setAlignment(Element.ALIGN_CENTER);
-                    document.add(new Paragraph("Scan QR Code for Verification:", headerFont));
                     document.add(qrImage);
                 } catch (Exception e) {
                     // QR code loading failed
                 }
             }
 
-            // Add footer
-            document.add(new Paragraph(" "));
-            document.add(new Paragraph("Thank you for choosing Inzira Bus Services!", normalFont));
-            document.add(new Paragraph("Please arrive at the pickup point 15 minutes before departure.", normalFont));
+            // Footer with instructions
+            document.add(new Paragraph(" ", smallFont));
+            Paragraph footer1 = new Paragraph("Thank you for choosing Inzira!", smallFont);
+            footer1.setAlignment(Element.ALIGN_CENTER);
+            document.add(footer1);
+            
+            Paragraph footer2 = new Paragraph("Arrive 15 min early", smallFont);
+            footer2.setAlignment(Element.ALIGN_CENTER);
+            document.add(footer2);
+            
+            Paragraph footer3 = new Paragraph("Show QR code to driver", smallFont);
+            footer3.setAlignment(Element.ALIGN_CENTER);
+            document.add(footer3);
 
             document.close();
 
@@ -124,5 +178,17 @@ public class PDFTicketService {
         } catch (DocumentException | IOException e) {
             throw new RuntimeException("Failed to generate PDF ticket", e);
         }
+    }
+
+    private void addTableRow(PdfPTable table, String label, String value, Font labelFont, Font valueFont) {
+        PdfPCell labelCell = new PdfPCell(new Phrase(label, labelFont));
+        labelCell.setBorder(Rectangle.NO_BORDER);
+        labelCell.setPadding(1);
+        table.addCell(labelCell);
+
+        PdfPCell valueCell = new PdfPCell(new Phrase(value, valueFont));
+        valueCell.setBorder(Rectangle.NO_BORDER);
+        valueCell.setPadding(1);
+        table.addCell(valueCell);
     }
 }

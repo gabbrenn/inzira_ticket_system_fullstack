@@ -28,7 +28,11 @@ const AgencyManagement = () => {
     try {
       setLoading(true)
       const response = await adminAPI.getAgencies()
-      setAgencies(response.data.data || [])
+      // Sort agencies by creation date (newest first)
+      const sortedAgencies = (response.data.data || []).sort((a, b) => 
+        new Date(b.createdAt) - new Date(a.createdAt)
+      )
+      setAgencies(sortedAgencies)
     } catch (error) {
       toast.error('Failed to fetch agencies')
     } finally {

@@ -33,7 +33,11 @@ const BranchOfficeManagement = () => {
     try {
       setLoading(true)
       const response = await agencyAPI.getBranchOfficesByAgency(user.roleEntityId)
-      setBranchOffices(response.data.data || [])
+      // Sort branch offices by creation date (newest first)
+      const sortedOffices = (response.data.data || []).sort((a, b) => 
+        new Date(b.createdAt) - new Date(a.createdAt)
+      )
+      setBranchOffices(sortedOffices)
     } catch (error) {
       toast.error('Failed to fetch branch offices')
     } finally {

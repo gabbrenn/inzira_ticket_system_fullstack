@@ -34,7 +34,11 @@ const BranchManagerManagement = () => {
     try {
       setLoading(true)
       const response = await agencyAPI.getBranchManagersByAgency(user.roleEntityId)
-      setBranchManagers(response.data.data || [])
+      // Sort branch managers by creation date (newest first)
+      const sortedManagers = (response.data.data || []).sort((a, b) => 
+        new Date(b.createdAt) - new Date(a.createdAt)
+      )
+      setBranchManagers(sortedManagers)
     } catch (error) {
       toast.error('Failed to fetch branch managers')
     } finally {

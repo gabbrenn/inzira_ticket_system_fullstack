@@ -26,7 +26,11 @@ const BookingManagement = () => {
     try {
       setLoading(true)
       const response = await customerAPI.getBookingsByCustomer(user.roleEntityId)
-      setBookings(response.data.data || [])
+      // Sort bookings by creation date (newest first)
+      const sortedBookings = (response.data.data || []).sort((a, b) => 
+        new Date(b.createdAt) - new Date(a.createdAt)
+      )
+      setBookings(sortedBookings)
     } catch (error) {
       toast.error('Failed to fetch bookings')
     } finally {

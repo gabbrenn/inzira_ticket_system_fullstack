@@ -33,7 +33,11 @@ const DriverManagement = () => {
       setLoading(true)
       // Fetch drivers for the authenticated agency
       const response = await agencyAPI.getDriversByAgency(user.roleEntityId)
-      setDrivers(response.data.data || [])
+      // Sort drivers by creation date (newest first)
+      const sortedDrivers = (response.data.data || []).sort((a, b) => 
+        new Date(b.createdAt) - new Date(a.createdAt)
+      )
+      setDrivers(sortedDrivers)
     } catch (error) {
       toast.error('Failed to fetch drivers')
     } finally {
