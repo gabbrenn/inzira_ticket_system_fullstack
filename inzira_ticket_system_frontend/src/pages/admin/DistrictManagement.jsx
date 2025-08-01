@@ -183,7 +183,7 @@ const DistrictManagement = () => {
               </div>
             ) : (
               <div className="space-y-3">
-                {districts.map((district) => (
+                {districts.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)).map((district) => (
                   <div
                     key={district.id}
                     className={`p-4 border rounded-lg cursor-pointer transition-colors ${
@@ -258,7 +258,7 @@ const DistrictManagement = () => {
               </div>
             ) : (
               <div className="space-y-3">
-                {routePoints[selectedDistrict.id]?.map((point) => (
+                {routePoints[selectedDistrict.id]?.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)).map((point) => (
                   <div
                     key={point.id}
                     className="p-4 border border-gray-200 rounded-lg"

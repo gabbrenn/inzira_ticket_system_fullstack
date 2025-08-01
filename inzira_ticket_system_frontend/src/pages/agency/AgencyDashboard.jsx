@@ -1,9 +1,10 @@
 import React from 'react'
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Bus, Users, Route, Calendar, Plus, BarChart3, Building2, UserCheck, User, Crown } from 'lucide-react'
+import { Bus, Users, Route, Calendar, Plus, BarChart3, Building2, UserCheck, User, Crown, TrendingUp, DollarSign } from 'lucide-react'
 import { agencyAPI } from '../../services/api'
 import { useAuth } from '../../contexts/AuthContext'
+import DashboardCard from '../../components/DashboardCard'
 import toast from 'react-hot-toast'
 
 const AgencyDashboard = () => {
@@ -203,74 +204,83 @@ const AgencyDashboard = () => {
             <div className="loading-spinner mx-auto"></div>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600 mb-1">
-                {metrics?.totalBuses || 0}
-              </div>
-              <div className="text-sm text-gray-600">Total Buses</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600 mb-1">
-                {metrics?.activeDrivers || 0}
-              </div>
-              <div className="text-sm text-gray-600">Active Drivers</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600 mb-1">
-                {metrics?.totalBranchOffices || 0}
-              </div>
-              <div className="text-sm text-gray-600">Branch Offices</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600 mb-1">
-                {metrics?.activeAgents || 0}
-              </div>
-              <div className="text-sm text-gray-600">Active Agents</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-red-600 mb-1">
-                {metrics?.totalBookings || 0}
-              </div>
-              <div className="text-sm text-gray-600">Total Bookings</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-teal-600 mb-1">
-                {metrics?.totalRevenue ? `${parseFloat(metrics.totalRevenue).toLocaleString()}` : '0'}
-              </div>
-              <div className="text-sm text-gray-600">Revenue (RWF)</div>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+            <DashboardCard
+              title="Total Buses"
+              value={metrics?.totalBuses || 0}
+              icon={Bus}
+              color="text-blue-600"
+              bgColor="bg-blue-50"
+              subtitle={`${metrics?.activeBuses || 0} active`}
+            />
+            <DashboardCard
+              title="Active Drivers"
+              value={metrics?.activeDrivers || 0}
+              icon={Users}
+              color="text-green-600"
+              bgColor="bg-green-50"
+              subtitle={`${metrics?.totalDrivers || 0} total`}
+            />
+            <DashboardCard
+              title="Branch Offices"
+              value={metrics?.totalBranchOffices || 0}
+              icon={Building2}
+              color="text-purple-600"
+              bgColor="bg-purple-50"
+              subtitle={`${metrics?.activeBranchOffices || 0} active`}
+            />
+            <DashboardCard
+              title="Active Agents"
+              value={metrics?.activeAgents || 0}
+              icon={UserCheck}
+              color="text-orange-600"
+              bgColor="bg-orange-50"
+              subtitle={`${metrics?.totalAgents || 0} total`}
+            />
+            <DashboardCard
+              title="Total Bookings"
+              value={metrics?.totalBookings || 0}
+              icon={Calendar}
+              color="text-red-600"
+              bgColor="bg-red-50"
+              subtitle={`${metrics?.confirmedBookings || 0} confirmed`}
+            />
+            <DashboardCard
+              title="Total Revenue"
+              value={metrics?.totalRevenue ? `${parseFloat(metrics.totalRevenue).toLocaleString()} RWF` : '0 RWF'}
+              icon={DollarSign}
+              color="text-teal-600"
+              bgColor="bg-teal-50"
+              subtitle={`${metrics?.monthlyRevenue ? parseFloat(metrics.monthlyRevenue).toLocaleString() : '0'} this month`}
+            />
           </div>
         )}
       </div>
       
       {/* Additional Metrics */}
       {metrics && (
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="text-center">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="text-2xl font-bold text-blue-600 mb-1">
-                {metrics.todaySchedules || 0}
-              </div>
-              <div className="text-sm text-gray-600">Today's Schedules</div>
-            </div>
-          </div>
-          <div className="text-center">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="text-2xl font-bold text-green-600 mb-1">
-                {metrics.confirmedBookings || 0}
-              </div>
-              <div className="text-sm text-gray-600">Confirmed Bookings</div>
-            </div>
-          </div>
-          <div className="text-center">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="text-2xl font-bold text-purple-600 mb-1">
-                {metrics.uniqueCustomers || 0}
-              </div>
-              <div className="text-sm text-gray-600">Unique Customers</div>
-            </div>
-          </div>
+        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <DashboardCard
+            title="Today's Schedules"
+            value={metrics.todaySchedules || 0}
+            icon={Calendar}
+            color="text-blue-600"
+            bgColor="bg-blue-50"
+          />
+          <DashboardCard
+            title="Confirmed Bookings"
+            value={metrics.confirmedBookings || 0}
+            icon={TrendingUp}
+            color="text-green-600"
+            bgColor="bg-green-50"
+          />
+          <DashboardCard
+            title="Unique Customers"
+            value={metrics.uniqueCustomers || 0}
+            icon={Users}
+            color="text-purple-600"
+            bgColor="bg-purple-50"
+          />
         </div>
       )}
     </div>

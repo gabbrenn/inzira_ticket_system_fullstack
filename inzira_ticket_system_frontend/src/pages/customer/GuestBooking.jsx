@@ -1,9 +1,18 @@
 import React, { useState, useEffect } from 'react'
-import { Search, MapPin, Calendar, Clock, Users, ArrowRight, Download, User, Phone, Mail } from 'lucide-react'
+import { Search, MapPin, Calendar, Clock, Users, ArrowRight, Download, User, Phone, Mail, CheckCircle } from 'lucide-react'
 import { customerAPI } from '../../services/api'
+import { useAuth } from '../../contexts/AuthContext'
+import { Navigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 
 const GuestBooking = () => {
+  const { isAuthenticated } = useAuth()
+  
+  // Redirect logged-in users to their dashboard
+  if (isAuthenticated()) {
+    return <Navigate to="/customer/search" replace />
+  }
+
   const [districts, setDistricts] = useState([])
   const [schedules, setSchedules] = useState([])
   const [routePoints, setRoutePoints] = useState({})

@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Search, Phone, Mail, Download, QrCode } from 'lucide-react'
-import { customerAPI } from '../services/api'
+import { authAPI } from '../services/api'
 import toast from 'react-hot-toast'
 
 const BookingReferenceSearch = () => {
@@ -33,7 +33,14 @@ const BookingReferenceSearch = () => {
 
     try {
       setLoading(true)
-      const response = await customerAPI.getBookingByReference(searchForm.bookingReference)
+      // Use the public ticket verification endpoint
+      const response = await fetch(`http://localhost:8080/api/tickets/verify/${searchForm.bookingReference}`)
+      const data = await response.json()
+      
+      if (!response.ok || !data.success) {
+        throw new Error('Booking not found')
+      }
+      
       const foundBooking = response.data.data
 
       // Verify the booking belongs to the person searching
