@@ -25,7 +25,11 @@ const RouteManagement = () => {
     try {
       setLoading(true)
       const response = await adminAPI.getRoutes()
-      setRoutes(response.data.data || [])
+      // Sort routes by creation date (newest first)
+      const sortedRoutes = (response.data.data || []).sort((a, b) => 
+        new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
+      )
+      setRoutes(sortedRoutes)
     } catch (error) {
       toast.error('Failed to fetch routes')
     } finally {

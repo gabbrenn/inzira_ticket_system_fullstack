@@ -1,8 +1,30 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import { Bus, Users, MapPin, Calendar, ArrowRight, Shield, Clock, CreditCard } from 'lucide-react'
+import { useAuth } from '../contexts/AuthContext'
+import BookingReferenceSearch from '../components/BookingReferenceSearch'
 
 const Home = () => {
+  const { isAuthenticated, user } = useAuth()
+
+  // Redirect logged-in users to their appropriate dashboards
+  if (isAuthenticated()) {
+    switch (user?.role) {
+      case 'ADMIN':
+        return <Navigate to="/admin" replace />
+      case 'AGENCY':
+        return <Navigate to="/agency" replace />
+      case 'BRANCH_MANAGER':
+        return <Navigate to="/branch-manager" replace />
+      case 'AGENT':
+        return <Navigate to="/agent" replace />
+      case 'CUSTOMER':
+        return <Navigate to="/customer" replace />
+      default:
+        break
+    }
+  }
+
   const features = [
     {
       icon: Shield,
