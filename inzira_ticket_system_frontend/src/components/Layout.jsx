@@ -1,23 +1,13 @@
 import React from 'react'
 import { Link, useLocation, useNavigate, Navigate } from 'react-router-dom'
-import { Bus, Users, MapPin, Calendar, User, Home, Settings, LogOut, Building2, UserCheck } from 'lucide-react'
+import { Bus, LogOut } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import toast from 'react-hot-toast'
 
 const Layout = ({ children }) => {
   const location = useLocation()
   const navigate = useNavigate()
-  const { user, logout, isAuthenticated, hasRole } = useAuth()
-  
-  const navigation = [
-    { name: 'Home', href: '/', icon: Home, public: true },
-    { name: 'Book Ticket', href: '/guest-booking', icon: Calendar, public: true, guestOnly: true },
-    { name: 'Admin Panel', href: '/admin', icon: Settings, role: 'ADMIN' },
-    { name: 'Agency Panel', href: '/agency', icon: Bus, role: 'AGENCY' },
-    { name: 'Branch Manager', href: '/branch-manager', icon: Building2, role: 'BRANCH_MANAGER' },
-    { name: 'Agent Panel', href: '/agent', icon: UserCheck, role: 'AGENT' },
-    { name: 'Customer Panel', href: '/customer', icon: User, role: 'CUSTOMER' },
-  ]
+  const { user, logout, isAuthenticated } = useAuth()
 
   const handleLogout = () => {
     logout()
@@ -25,13 +15,17 @@ const Layout = ({ children }) => {
     navigate('/')
   }
 
-  const filteredNavigation = navigation.filter(item => {
-    if (item.public && !item.guestOnly) return true
-    if (item.guestOnly) return !isAuthenticated()
-    if (!isAuthenticated()) return false
-    if (item.role) return hasRole(item.role)
-    return true
-  })
+  // Check if current route is a dashboard route
+  const isDashboardRoute = location.pathname.startsWith('/admin') || 
+                          location.pathname.startsWith('/agency') || 
+                          location.pathname.startsWith('/branch-manager') || 
+                          location.pathname.startsWith('/agent') || 
+                          location.pathname.startsWith('/customer')
+
+  // Don't show layout for dashboard routes (they have their own layout)
+  if (isDashboardRoute) {
+    return children
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -43,28 +37,6 @@ const Layout = ({ children }) => {
               <div className="flex-shrink-0 flex items-center">
                 <Bus className="h-8 w-8 text-primary-600" />
                 <span className="ml-2 text-xl font-bold text-gray-900">Inzira</span>
-              </div>
-              <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-                {filteredNavigation.map((item) => {
-                  const Icon = item.icon
-                  const isActive = location.pathname === item.href || 
-                    (item.href !== '/' && location.pathname.startsWith(item.href))
-                  
-                  return (
-                    <Link
-                      key={item.name}
-                      to={item.href}
-                      className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors ${
-                        isActive
-                          ? 'border-primary-500 text-gray-900'
-                          : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-                      }`}
-                    >
-                      <Icon className="h-4 w-4 mr-2" />
-                      {item.name}
-                    </Link>
-                  )
-                })}
               </div>
             </div>
 
@@ -101,8 +73,7 @@ const Layout = ({ children }) => {
                     to="/register/customer"
                     className="btn-primary text-sm px-3 py-2"
                   >
-                    <span className="hidden sm:inline">Register</span>
-                    <span className="sm:hidden">Sign Up</span>
+                    Register
                   </Link>
                 </div>
               )}
@@ -112,7 +83,7 @@ const Layout = ({ children }) => {
       </nav>
 
       {/* Main content */}
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <main>
         {children}
       </main>
     </div>

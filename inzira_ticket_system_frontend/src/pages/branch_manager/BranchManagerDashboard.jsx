@@ -1,18 +1,20 @@
 import React, { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
-import { Users, Calendar, BarChart3, Building2, Plus, UserCheck, ClipboardList } from 'lucide-react'
+import { Users, Calendar, BarChart3, Building2, TrendingUp, DollarSign, Activity, AlertTriangle } from 'lucide-react'
 import { branchManagerAPI } from '../../services/api'
 import { useAuth } from '../../contexts/AuthContext'
+import DashboardCard from '../../components/DashboardCard'
 import toast from 'react-hot-toast'
 
 const BranchManagerDashboard = () => {
   const { user } = useAuth()
   const [metrics, setMetrics] = useState(null)
+  const [recentSchedules, setRecentSchedules] = useState([])
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (user?.roleEntityId) {
       fetchMetrics()
+      fetchRecentSchedules()
     }
   }, [user])
 
@@ -23,51 +25,43 @@ const BranchManagerDashboard = () => {
       setMetrics(response.data.data)
     } catch (error) {
       console.error('Failed to fetch metrics:', error)
-      // Don't show error toast as it's not critical
     } finally {
       setLoading(false)
     }
   }
 
-  const branchManagerModules = [
-    {
-      title: 'Agent Management',
-      description: 'Create and manage agents in your branch office',
-      link: '/branch-manager/agents',
-      icon: Users,
-      color: 'bg-blue-500',
-      actions: ['Create Agents', 'Manage Status', 'Reset Passwords']
-    },
-    {
-      title: 'Schedule Management',
-      description: 'Create and manage bus schedules for your agency',
-      link: '/branch-manager/schedules',
-      icon: Calendar,
-      color: 'bg-green-500',
-      actions: ['Create Schedules', 'Assign Buses', 'Assign Drivers']
-    },
-    {
-      title: 'Reports & Analytics',
-      description: 'View ticket sales and branch performance reports',
-      link: '/branch-manager/reports',
-      icon: BarChart3,
-      color: 'bg-purple-500',
-      actions: ['Sales Reports', 'Schedule Analytics', 'Agent Performance']
+  const fetchRecentSchedules = async () => {
+    try {
+      const response = await branchManagerAPI.getSchedules(user.roleEntityId)
+      const schedules = response.data.data || []
+      setRecentSchedules(schedules.slice(0, 5))
+    } catch (error) {
+      console.error('Failed to fetch recent schedules:', error)
     }
-  ]
+  }
 
-  const quickActions = [
-    { title: 'Create Agent', action: 'create-agent', icon: UserCheck, link: '/branch-manager/agents' },
-    { title: 'Create Schedule', action: 'create-schedule', icon: Calendar, link: '/branch-manager/schedules' },
-    { title: 'View Reports', action: 'view-reports', icon: ClipboardList, link: '/branch-manager/reports' },
-  ]
+  const getScheduleStatusBadge = (status) => {
+    const baseClasses = "px-2 py-1 text-xs font-medium rounded-full"
+    switch (status) {
+      case 'SCHEDULED':
+        return `${baseClasses} bg-blue-100 text-blue-800`
+      case 'DEPARTED':
+        return `${baseClasses} bg-yellow-100 text-yellow-800`
+      case 'ARRIVED':
+        return `${baseClasses} bg-green-100 text-green-800`
+      case 'CANCELLED':
+        return `${baseClasses} bg-red-100 text-red-800`
+      default:
+        return `${baseClasses} bg-gray-100 text-gray-800`
+    }
+  }
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 fade-in">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Branch Manager Dashboard</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Branch Overview</h1>
         <p className="mt-2 text-gray-600">
-          Welcome {user?.firstName}! Manage your branch office operations
+          Welcome {user?.firstName}! Monitor your branch performance and operations
         </p>
         {metrics && (
           <div className="mt-2 text-sm text-gray-500">
@@ -76,155 +70,144 @@ const BranchManagerDashboard = () => {
         )}
       </div>
 
-      {/* Quick Actions */}
-      <div className="mb-8">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {quickActions.map((action, index) => {
-            const Icon = action.icon
-            return (
-              <Link
-                key={index}
-                to={action.link}
-                className="p-4 bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow text-left"
-              >
-                <div className="flex items-center">
-                  <Icon className="h-5 w-5 text-primary-600 mr-3" />
-                  <span className="font-medium text-gray-900">{action.title}</span>
-                </div>
-              </Link>
-            )
-          })}
-        </div>
+      {/* Key Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <DashboardCard
+          title="Branch Agents"
+          value={metrics?.totalAgents || 0}
+          icon={Users}
+          color="text-blue-600"
+          bgColor="bg-blue-50"
+          subtitle={`${metrics?.confirmedAgents || 0} confirmed`}
+        />
+        <DashboardCard
+          title="Active Schedules"
+          value={metrics?.totalSchedules || 0}
+          icon={Calendar}
+          color="text-green-600"
+          bgColor="bg-green-50"
+          subtitle={`${metrics?.todaySchedules || 0} today`}
+        />
+        <DashboardCard
+          title="Total Bookings"
+          value={metrics?.totalBookings || 0}
+          icon={BarChart3}
+          color="text-purple-600"
+          bgColor="bg-purple-50"
+          subtitle={`${metrics?.confirmedBookings || 0} confirmed`}
+        />
+        <DashboardCard
+          title="Monthly Revenue"
+          value={metrics?.monthlyRevenue ? `${parseFloat(metrics.monthlyRevenue).toLocaleString()} RWF` : '0 RWF'}
+          icon={DollarSign}
+          color="text-orange-600"
+          bgColor="bg-orange-50"
+          subtitle="This month"
+        />
       </div>
 
-      {/* Main Modules */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {branchManagerModules.map((module, index) => {
-          const Icon = module.icon
-          return (
-            <div key={index} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-              <div className="p-6">
-                <div className="flex items-center mb-4">
-                  <div className={`inline-flex items-center justify-center w-10 h-10 ${module.color} rounded-lg mr-3`}>
-                    <Icon className="h-5 w-5 text-white" />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Performance Summary */}
+        <div className="lg:col-span-2">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold text-gray-900">Branch Performance</h2>
+              <TrendingUp className="h-5 w-5 text-gray-400" />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-6">
+              <div className="text-center p-4 bg-gray-50 rounded-lg">
+                <div className="text-2xl font-bold text-green-600 mb-1">
+                  {metrics?.activeAgents || 0}
+                </div>
+                <div className="text-sm text-gray-600">Active Agents</div>
+                <div className="text-xs text-gray-500 mt-1">
+                  {metrics?.totalAgents ? ((metrics.activeAgents / metrics.totalAgents) * 100).toFixed(0) : 0}% of total
+                </div>
+              </div>
+              
+              <div className="text-center p-4 bg-gray-50 rounded-lg">
+                <div className="text-2xl font-bold text-blue-600 mb-1">
+                  {metrics?.pendingBookings || 0}
+                </div>
+                <div className="text-sm text-gray-600">Pending Bookings</div>
+                <div className="text-xs text-gray-500 mt-1">
+                  Require attention
+                </div>
+              </div>
+            </div>
+
+            {/* Revenue Summary */}
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <h3 className="text-sm font-medium text-gray-900 mb-4">Revenue Summary</h3>
+              <div className="flex justify-between items-center">
+                <div>
+                  <div className="text-2xl font-bold text-gray-900">
+                    {metrics?.totalRevenue ? `${parseFloat(metrics.totalRevenue).toLocaleString()} RWF` : '0 RWF'}
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    {module.title}
-                  </h3>
+                  <div className="text-sm text-gray-500">Total Revenue</div>
                 </div>
-                
-                <p className="text-gray-600 mb-4">
-                  {module.description}
-                </p>
-                
-                <div className="space-y-2 mb-6">
-                  {module.actions.map((action, actionIndex) => (
-                    <div key={actionIndex} className="flex items-center text-sm text-gray-500">
-                      <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></div>
-                      {action}
-                    </div>
-                  ))}
+                <div className="text-right">
+                  <div className="text-lg font-semibold text-green-600">
+                    {metrics?.completedBookings || 0}
+                  </div>
+                  <div className="text-sm text-gray-500">Completed Trips</div>
                 </div>
-                
-                <Link
-                  to={module.link}
-                  className="btn-primary w-full text-center"
-                >
-                  Manage {module.title.split(' ')[0]}s
-                </Link>
               </div>
             </div>
-          )
-        })}
+          </div>
+        </div>
+
+        {/* Recent Schedules */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-semibold text-gray-900">Recent Schedules</h2>
+            <Activity className="h-5 w-5 text-gray-400" />
+          </div>
+          
+          <div className="space-y-4">
+            {recentSchedules.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <Calendar className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                <p className="text-sm">No recent schedules</p>
+              </div>
+            ) : (
+              recentSchedules.map((schedule) => (
+                <div key={schedule.id} className="border border-gray-200 rounded-lg p-3">
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="text-sm font-medium text-gray-900 truncate">
+                      {schedule.agencyRoute.route.origin.name} → {schedule.agencyRoute.route.destination.name}
+                    </div>
+                    <span className={getScheduleStatusBadge(schedule.status)}>
+                      {schedule.status}
+                    </span>
+                  </div>
+                  <div className="text-xs text-gray-600">
+                    <div className="flex justify-between">
+                      <span>{schedule.departureDate}</span>
+                      <span>{schedule.departureTime}</span>
+                    </div>
+                    <div className="flex justify-between mt-1">
+                      <span>{schedule.bus.plateNumber}</span>
+                      <span>{schedule.availableSeats} seats</span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* Branch Overview */}
-      <div className="mt-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">Branch Overview</h2>
-          {!loading && (
-            <button
-              onClick={fetchMetrics}
-              className="text-sm text-primary-600 hover:text-primary-800"
-            >
-              Refresh
-            </button>
-          )}
-        </div>
-        
-        {loading ? (
-          <div className="text-center py-4">
-            <div className="loading-spinner mx-auto"></div>
+      {/* Setup Alerts */}
+      {metrics && metrics.totalAgents === 0 && (
+        <div className="mt-8 bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+          <div className="flex items-center mb-4">
+            <AlertTriangle className="h-6 w-6 text-yellow-600 mr-3" />
+            <h3 className="text-lg font-semibold text-yellow-900">Setup Required</h3>
           </div>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600 mb-1">
-                {metrics?.totalAgents || 0}
-              </div>
-              <div className="text-sm text-gray-600">Total Agents</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600 mb-1">
-                {metrics?.activeAgents || 0}
-              </div>
-              <div className="text-sm text-gray-600">Active Agents</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600 mb-1">
-                {metrics?.confirmedAgents || 0}
-              </div>
-              <div className="text-sm text-gray-600">Confirmed Agents</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600 mb-1">
-                {metrics?.totalSchedules || 0}
-              </div>
-              <div className="text-sm text-gray-600">Total Schedules</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-red-600 mb-1">
-                {metrics?.totalBookings || 0}
-              </div>
-              <div className="text-sm text-gray-600">Total Bookings</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-teal-600 mb-1">
-                {metrics?.totalRevenue ? `${parseFloat(metrics.totalRevenue).toLocaleString()}` : '0'}
-              </div>
-              <div className="text-sm text-gray-600">Revenue (RWF)</div>
-            </div>
-          </div>
-        )}
-      </div>
-      
-      {/* Additional Metrics */}
-      {metrics && (
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="text-center">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="text-2xl font-bold text-blue-600 mb-1">
-                {metrics.todaySchedules || 0}
-              </div>
-              <div className="text-sm text-gray-600">Today's Schedules</div>
-            </div>
-          </div>
-          <div className="text-center">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="text-2xl font-bold text-green-600 mb-1">
-                {metrics.confirmedBookings || 0}
-              </div>
-              <div className="text-sm text-gray-600">Confirmed Bookings</div>
-            </div>
-          </div>
-          <div className="text-center">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="text-2xl font-bold text-purple-600 mb-1">
-                {metrics.monthlyRevenue ? `${parseFloat(metrics.monthlyRevenue).toLocaleString()}` : '0'}
-              </div>
-              <div className="text-sm text-gray-600">Monthly Revenue (RWF)</div>
-            </div>
+          <div className="text-sm text-yellow-800">
+            <p>Your branch office doesn't have any agents yet. Add agents to start processing customer bookings.</p>
           </div>
         </div>
       )}
