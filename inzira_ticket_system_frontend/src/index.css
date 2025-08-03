@@ -65,6 +65,25 @@
   .mobile-full {
     @apply w-full sm:w-auto;
   }
+
+  /* Dashboard specific styles */
+  .dashboard-sidebar {
+    @apply fixed top-0 left-0 h-full w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out z-50;
+  }
+
+  .dashboard-sidebar.open {
+    @apply translate-x-0;
+  }
+
+  .dashboard-sidebar.closed {
+    @apply -translate-x-full;
+  }
+
+  @screen lg {
+    .dashboard-sidebar {
+      @apply translate-x-0 static shadow-none border-r border-gray-200;
+    }
+  }
 }
 
 /* Custom scrollbar */

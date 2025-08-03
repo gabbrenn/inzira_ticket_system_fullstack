@@ -1,13 +1,19 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Users, Calendar, CreditCard, User, MapPin, Clock, Building2, BarChart3 } from 'lucide-react'
+import { CreditCard, BarChart3, User, Calendar, Clock, MapPin, Activity, TrendingUp } from 'lucide-react'
 import { agentAPI } from '../../services/api'
 import { useAuth } from '../../contexts/AuthContext'
+import DashboardCard from '../../components/DashboardCard'
 import toast from 'react-hot-toast'
 
 const AgentDashboard = () => {
   const [recentBookings, setRecentBookings] = useState([])
   const [agentProfile, setAgentProfile] = useState(null)
+  const [todayStats, setTodayStats] = useState({
+    bookingsCreated: 0,
+    totalRevenue: 0,
+    seatsBooked: 0
+  })
   const [loading, setLoading] = useState(false)
   const { user } = useAuth()
 
@@ -15,6 +21,7 @@ const AgentDashboard = () => {
     if (user?.roleEntityId) {
       fetchAgentProfile()
       fetchRecentBookings()
+      fetchTodayStats()
     }
   }, [user])
 
@@ -40,38 +47,21 @@ const AgentDashboard = () => {
     }
   }
 
-  const agentModules = [
-    {
-      title: 'Booking Management',
-      description: 'Create tickets for walk-in customers and manage bookings',
-      link: '/agent/bookings',
-      icon: CreditCard,
-      color: 'bg-blue-500',
-      actions: ['Search Schedules', 'Book Tickets', 'View Bookings', 'Print Tickets']
-    },
-    {
-      title: 'My Profile',
-      description: 'Update your profile information',
-      link: '/agent/profile',
-      icon: User,
-      color: 'bg-green-500',
-      actions: ['Update Info', 'Change Password', 'Contact Details']
-    },
-    {
-      title: 'Reports & Analytics',
-      description: 'View your booking reports and performance',
-      link: '/agent/reports',
-      icon: BarChart3,
-      color: 'bg-purple-500',
-      actions: ['Daily Reports', 'Schedule Reports', 'Download Tickets']
+  const fetchTodayStats = async () => {
+    try {
+      const today = new Date().toISOString().split('T')[0]
+      const response = await agentAPI.getDailyBookings(user.roleEntityId, today)
+      const todayBookings = response.data.data || []
+      
+      setTodayStats({
+        bookingsCreated: todayBookings.length,
+        totalRevenue: todayBookings.reduce((sum, b) => sum + parseFloat(b.totalAmount), 0),
+        seatsBooked: todayBookings.reduce((sum, b) => sum + b.numberOfSeats, 0)
+      })
+    } catch (error) {
+      console.error('Failed to fetch today stats:', error)
     }
-  ]
-
-  const quickActions = [
-    { title: 'New Booking', action: 'new-booking', icon: CreditCard, link: '/agent/bookings' },
-    { title: 'My Reports', action: 'view-reports', icon: BarChart3, link: '/agent/reports' },
-    { title: 'Update Profile', action: 'update-profile', icon: User, link: '/agent/profile' },
-  ]
+  }
 
   const getStatusBadge = (status) => {
     const baseClasses = "px-2 py-1 text-xs font-medium rounded-full"
@@ -89,12 +79,23 @@ const AgentDashboard = () => {
     }
   }
 
+  const formatTimeAgo = (timestamp) => {
+    const now = new Date()
+    const diff = now - new Date(timestamp)
+    const hours = Math.floor(diff / (1000 * 60 * 60))
+    const days = Math.floor(hours / 24)
+    
+    if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`
+    if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`
+    return 'Just now'
+  }
+
   return (
     <div className="px-4 sm:px-6 lg:px-8 fade-in">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Agent Dashboard</h1>
         <p className="mt-2 text-gray-600">
-          Welcome {user?.firstName}! Help customers book their bus tickets
+          Welcome {user?.firstName}! Help customers book their perfect journey
         </p>
         {agentProfile && (
           <div className="mt-2 text-sm text-gray-500">
@@ -103,83 +104,107 @@ const AgentDashboard = () => {
         )}
       </div>
 
-      {/* Quick Actions */}
-      <div className="mb-8">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {quickActions.map((action, index) => {
-            const Icon = action.icon
-            return (
-              <Link
-                key={index}
-                to={action.link}
-                className="p-4 bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow text-left"
-              >
-                <div className="flex items-center">
-                  <Icon className="h-5 w-5 text-primary-600 mr-3" />
-                  <span className="font-medium text-gray-900">{action.title}</span>
-                </div>
-              </Link>
-            )
-          })}
-        </div>
+      {/* Today's Performance */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <DashboardCard
+          title="Today's Bookings"
+          value={todayStats.bookingsCreated}
+          icon={CreditCard}
+          color="text-blue-600"
+          bgColor="bg-blue-50"
+          subtitle="Tickets created today"
+        />
+        <DashboardCard
+          title="Seats Sold"
+          value={todayStats.seatsBooked}
+          icon={TrendingUp}
+          color="text-green-600"
+          bgColor="bg-green-50"
+          subtitle="Today's sales"
+        />
+        <DashboardCard
+          title="Revenue Generated"
+          value={`${todayStats.totalRevenue.toLocaleString()} RWF`}
+          icon={BarChart3}
+          color="text-purple-600"
+          bgColor="bg-purple-50"
+          subtitle="Today's earnings"
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Modules */}
-        <div className="lg:col-span-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {agentModules.map((module, index) => {
-              const Icon = module.icon
-              return (
-                <div key={index} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                  <div className="p-6">
-                    <div className="flex items-center mb-4">
-                      <div className={`inline-flex items-center justify-center w-10 h-10 ${module.color} rounded-lg mr-3`}>
-                        <Icon className="h-5 w-5 text-white" />
-                      </div>
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {module.title}
-                      </h3>
-                    </div>
-                    
-                    <p className="text-gray-600 mb-4">
-                      {module.description}
-                    </p>
-                    
-                    <div className="space-y-2 mb-6">
-                      {module.actions.map((action, actionIndex) => (
-                        <div key={actionIndex} className="flex items-center text-sm text-gray-500">
-                          <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></div>
-                          {action}
-                        </div>
-                      ))}
-                    </div>
-                    
-                    <Link
-                      to={module.link}
-                      className="btn-primary w-full text-center"
-                    >
-                      {module.title}
-                    </Link>
+        {/* Quick Actions */}
+        <div className="lg:col-span-2">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-6">Quick Actions</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Link
+                to="/agent/bookings"
+                className="group p-6 border border-gray-200 rounded-lg hover:border-primary-300 hover:shadow-md transition-all"
+              >
+                <div className="flex items-center mb-4">
+                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                    <CreditCard className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <div className="ml-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Create Booking</h3>
+                    <p className="text-sm text-gray-600">Help customers book tickets</p>
                   </div>
                 </div>
-              )
-            })}
+              </Link>
+
+              <Link
+                to="/agent/reports"
+                className="group p-6 border border-gray-200 rounded-lg hover:border-primary-300 hover:shadow-md transition-all"
+              >
+                <div className="flex items-center mb-4">
+                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition-colors">
+                    <BarChart3 className="h-6 w-6 text-green-600" />
+                  </div>
+                  <div className="ml-4">
+                    <h3 className="text-lg font-semibold text-gray-900">View Reports</h3>
+                    <p className="text-sm text-gray-600">Check your performance</p>
+                  </div>
+                </div>
+              </Link>
+            </div>
+
+            {/* Performance Summary */}
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <h3 className="text-sm font-medium text-gray-900 mb-4">Performance Summary</h3>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center p-3 bg-gray-50 rounded-lg">
+                  <div className="text-lg font-bold text-blue-600">
+                    {recentBookings.length}
+                  </div>
+                  <div className="text-xs text-gray-600">Recent Bookings</div>
+                </div>
+                <div className="text-center p-3 bg-gray-50 rounded-lg">
+                  <div className="text-lg font-bold text-green-600">
+                    {recentBookings.filter(b => b.status === 'CONFIRMED').length}
+                  </div>
+                  <div className="text-xs text-gray-600">Confirmed</div>
+                </div>
+                <div className="text-center p-3 bg-gray-50 rounded-lg">
+                  <div className="text-lg font-bold text-purple-600">
+                    {recentBookings.reduce((sum, b) => sum + parseFloat(b.totalAmount), 0).toLocaleString()}
+                  </div>
+                  <div className="text-xs text-gray-600">Revenue (RWF)</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Recent Bookings Sidebar */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="p-6 border-b border-gray-200">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-semibold text-gray-900">Recent Bookings</h3>
-              <Link to="/agent/bookings" className="text-sm text-primary-600 hover:text-primary-800">
-                View All
-              </Link>
-            </div>
+        {/* Recent Activity */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-semibold text-gray-900">Recent Activity</h2>
+            <Activity className="h-5 w-5 text-gray-400" />
           </div>
-          <div className="p-6">
+          
+          <div className="space-y-4">
             {loading ? (
               <div className="text-center py-4">
                 <div className="loading-spinner mx-auto"></div>
@@ -196,24 +221,47 @@ const AgentDashboard = () => {
                 </Link>
               </div>
             ) : (
-              <div className="space-y-4">
-                {recentBookings.map((booking) => (
-                  <div key={booking.id} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="text-sm font-medium text-gray-900">
-                        {booking.bookingReference}
-                      </div>
-                      <span className={getStatusBadge(booking.status)}>
-                        {booking.status}
-                      </span>
+              recentBookings.map((booking) => (
+                <div key={booking.id} className="border border-gray-200 rounded-lg p-3">
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="text-sm font-medium text-gray-900 truncate">
+                      {booking.bookingReference}
+                    </div>
+                    <span className={getStatusBadge(booking.status)}>
+                      {booking.status}
+                    </span>
+                  </div>
+                  <div className="text-xs text-gray-600">
+                    <div className="truncate mb-1">
+                      {booking.customer.firstName} {booking.customer.lastName}
+                    </div>
+                    <div className="flex justify-between">
+                      <span>{booking.numberOfSeats} seat(s)</span>
+                      <span className="font-medium">{booking.totalAmount} RWF</span>
+                    </div>
+                    <div className="text-gray-500 mt-1">
+                      {formatTimeAgo(booking.createdAt)}
                     </div>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))
             )}
           </div>
         </div>
       </div>
+
+      {/* Agent Status */}
+      {agentProfile && !agentProfile.confirmedByAgency && (
+        <div className="mt-8 bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+          <div className="flex items-center mb-4">
+            <AlertTriangle className="h-6 w-6 text-yellow-600 mr-3" />
+            <h3 className="text-lg font-semibold text-yellow-900">Account Pending Confirmation</h3>
+          </div>
+          <div className="text-sm text-yellow-800">
+            <p>Your agent account is pending confirmation from your agency. You may have limited access until confirmed.</p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
