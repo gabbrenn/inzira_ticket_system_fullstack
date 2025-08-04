@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { 
   Home, Settings, Users, MapPin, Route, Building2, Bus, Calendar, 
   BarChart3, UserCheck, Crown, User, CreditCard, ClipboardList,
-  ChevronRight, LogOut
+  ChevronRight, LogOut, X
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import toast from 'react-hot-toast'
