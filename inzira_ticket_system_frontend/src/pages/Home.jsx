@@ -18,6 +18,8 @@ const Home = () => {
         return <Navigate to="/branch-manager" replace />
       case 'AGENT':
         return <Navigate to="/agent" replace />
+      case 'DRIVER':
+        return <Navigate to="/driver" replace />
       case 'CUSTOMER':
         return <Navigate to="/customer" replace />
       default:

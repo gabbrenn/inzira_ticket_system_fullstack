@@ -300,4 +300,22 @@ export const agentAPI = {
   getAgencySchedules: (agencyId) => api.get(`/agency/schedules/agency/${agencyId}`),
 }
 
+// Driver APIs
+export const driverAPI = {
+  // Driver profile
+  getProfile: (driverId) => api.get(`/driver/profile/${driverId}`),
+  updateProfile: (driverId, data) => api.put(`/driver/profile/${driverId}`, data),
+  
+  // Driver schedules
+  getSchedules: (driverId) => api.get(`/driver/schedules/${driverId}`),
+  getTodaySchedules: (driverId) => api.get(`/driver/schedules/${driverId}/today`),
+  getUpcomingSchedules: (driverId) => api.get(`/driver/schedules/${driverId}/upcoming`),
+  getSchedulesByDate: (driverId, date) => api.get(`/driver/schedules/${driverId}/date/${date}`),
+  
+  // Ticket verification
+  verifyTicketByReference: (data) => api.post('/driver/verification/reference', data),
+  verifyTicketByQR: (data) => api.post('/driver/verification/qr-code', data),
+  getScheduleBookings: (scheduleId, driverId) => api.get(`/driver/verification/schedule/${scheduleId}/bookings?driverId=${driverId}`),
+}
+
 export default api

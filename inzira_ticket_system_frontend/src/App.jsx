@@ -49,6 +49,12 @@ import AgentBookingManagement from './pages/agent/AgentBookingManagement'
 import AgentProfile from './pages/agent/AgentProfile'
 import AgentReports from './pages/agent/AgentReports'
 
+// Driver pages
+import DriverDashboard from './pages/driver/DriverDashboard'
+import DriverSchedules from './pages/driver/DriverSchedules'
+import DriverTicketVerification from './pages/driver/DriverTicketVerification'
+import DriverProfile from './pages/driver/DriverProfile'
+
 function App() {
   return (
     <AuthProvider>
@@ -222,6 +228,36 @@ function App() {
                 <ProtectedRoute requiredRole="AGENT">
                   <DashboardLayout>
                     <AgentReports />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+              
+              {/* Driver Routes */}
+              <Route path="/driver" element={
+                <ProtectedRoute requiredRole="DRIVER">
+                  <DashboardLayout>
+                    <DriverDashboard />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/driver/schedules" element={
+                <ProtectedRoute requiredRole="DRIVER">
+                  <DashboardLayout>
+                    <DriverSchedules />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/driver/verification" element={
+                <ProtectedRoute requiredRole="DRIVER">
+                  <DashboardLayout>
+                    <DriverTicketVerification />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/driver/profile" element={
+                <ProtectedRoute requiredRole="DRIVER">
+                  <DashboardLayout>
+                    <DriverProfile />
                   </DashboardLayout>
                 </ProtectedRoute>
               } />
