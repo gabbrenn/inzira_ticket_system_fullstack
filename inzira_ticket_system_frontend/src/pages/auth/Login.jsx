@@ -44,6 +44,9 @@ const Login = () => {
           case 'BRANCH_MANAGER':
             navigate('/branch-manager')
             break
+          case 'DRIVER':
+            navigate('/driver')
+            break
           case 'CUSTOMER':
             navigate('/customer')
             break

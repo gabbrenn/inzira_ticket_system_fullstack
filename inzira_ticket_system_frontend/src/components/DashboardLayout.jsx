@@ -12,11 +12,11 @@ const DashboardLayout = ({ children }) => {
     window.location.href = '/'
   }
 
-  // Customer layout - simplified without sidebar
-  if (hasRole('CUSTOMER')) {
+  // Customer and Driver layout - simplified without sidebar
+  if (hasRole('CUSTOMER') || hasRole('DRIVER')) {
     return (
       <div className="min-h-screen bg-gray-50">
-        {/* Simple header for customers */}
+        {/* Simple header for customers and drivers */}
         <header className="bg-white shadow-sm border-b border-gray-200">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
@@ -32,6 +32,9 @@ const DashboardLayout = ({ children }) => {
               <div className="flex items-center space-x-4">
                 <div className="text-sm text-gray-700">
                   Welcome, <span className="font-medium">{user?.firstName}</span>
+                  <span className="ml-2 px-2 py-1 bg-primary-100 text-primary-800 text-xs rounded-full">
+                    {user?.role}
+                  </span>
                 </div>
                 <button
                   onClick={handleLogout}
@@ -45,7 +48,7 @@ const DashboardLayout = ({ children }) => {
           </div>
         </header>
 
-        {/* Customer content with max-width container */}
+        {/* Content with max-width container */}
         <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
           {children}
         </main>

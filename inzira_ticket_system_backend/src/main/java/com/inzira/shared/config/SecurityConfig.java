@@ -64,6 +64,9 @@ public class SecurityConfig {
                 // Agent endpoints
                 .requestMatchers("/api/agent/**").hasRole("AGENT")
                 
+                // Driver endpoints
+                .requestMatchers("/api/driver/**").hasRole("DRIVER")
+                
                 // Customer endpoints
                 .requestMatchers("/api/customers/**").permitAll()
                 .requestMatchers("/api/bookings/**").permitAll()

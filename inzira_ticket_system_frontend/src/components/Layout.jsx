@@ -20,6 +20,7 @@ const Layout = ({ children }) => {
                           location.pathname.startsWith('/agency') || 
                           location.pathname.startsWith('/branch-manager') || 
                           location.pathname.startsWith('/agent') || 
+                          location.pathname.startsWith('/driver') || 
                           location.pathname.startsWith('/customer')
 
   // Don't show layout for dashboard routes (they have their own layout)

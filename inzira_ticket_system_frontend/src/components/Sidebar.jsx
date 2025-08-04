@@ -61,6 +61,15 @@ const Sidebar = ({ isOpen, onClose }) => {
       ]
     }
 
+    if (hasRole('DRIVER')) {
+      return [
+        { name: 'Dashboard', href: '/driver', icon: Home },
+        { name: 'My Schedules', href: '/driver/schedules', icon: Calendar },
+        { name: 'Ticket Verification', href: '/driver/verification', icon: UserCheck },
+        { name: 'Profile', href: '/driver/profile', icon: User },
+      ]
+    }
+
     return []
   }
 
