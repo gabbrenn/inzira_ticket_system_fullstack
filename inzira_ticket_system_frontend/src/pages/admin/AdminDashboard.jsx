@@ -24,17 +24,20 @@ const AdminDashboard = () => {
   const fetchSystemStats = async () => {
     try {
       setLoading(true)
-      const [districtsRes, routesRes, agenciesRes] = await Promise.all([
+      const [provincesRes, districtsRes, routesRes, agenciesRes] = await Promise.all([
+        adminAPI.getProvinces(),
         adminAPI.getDistricts(),
         adminAPI.getRoutes(),
         adminAPI.getAgencies()
       ])
       
+      const provinces = provincesRes.data.data || []
       const districts = districtsRes.data.data || []
       const routes = routesRes.data.data || []
       const agencies = agenciesRes.data.data || []
       
       setSystemStats({
+        totalProvinces: provinces.length,
         totalDistricts: districts.length,
         totalRoutes: routes.length,
         totalAgencies: agencies.length,
@@ -102,6 +105,14 @@ const AdminDashboard = () => {
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <DashboardCard
+          title="Total Provinces"
+          value={systemStats.totalProvinces || 0}
+          icon={Building2}
+          color="text-purple-600"
+          bgColor="bg-purple-50"
+          subtitle={`${systemStats.totalDistricts} districts`}
+        />
         <DashboardCard
           title="Total Districts"
           value={systemStats.totalDistricts}

@@ -47,6 +47,8 @@ public class SecurityConfig {
                 // Shared endpoints that multiple roles can access - MUST come before /api/admin/**
                 .requestMatchers("/api/admin/districts").permitAll()
                 .requestMatchers("/api/admin/districts/**").permitAll()
+                .requestMatchers("/api/admin/provinces").permitAll()
+                .requestMatchers("/api/admin/provinces/**").permitAll()
                 .requestMatchers("/api/admin/routes").hasAnyRole("ADMIN", "AGENCY","AGENT")
                 .requestMatchers("/api/admin/routes/**").hasAnyRole("ADMIN", "AGENCY")
                 .requestMatchers("/api/agency/schedules/**").permitAll()

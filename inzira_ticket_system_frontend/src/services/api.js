@@ -55,6 +55,11 @@ export const sharedAPI = {
   getDistrict: (id) => api.get(`/admin/districts/${id}`),
   getRoutePoints: (districtId) => api.get(`/admin/districts/${districtId}/points`),
   
+  // Provinces - accessible by all authenticated users
+  getProvinces: () => api.get('/admin/provinces'),
+  getProvince: (id) => api.get(`/admin/provinces/${id}`),
+  getDistrictsByProvince: (provinceId) => api.get(`/admin/provinces/${provinceId}/districts`),
+  
   // Routes - accessible by admin and agency
   getRoutes: () => api.get('/admin/routes'),
   getRoute: (id) => api.get(`/admin/routes/${id}`),
@@ -67,6 +72,14 @@ export const sharedAPI = {
 export const adminAPI = {
   // Admin registration
   registerAdmin: (data) => api.post('/admins/register', data),
+  
+  // Province management
+  createProvince: (data) => api.post('/admin/provinces', data),
+  getProvinces: () => api.get('/admin/provinces'),
+  getProvince: (id) => api.get(`/admin/provinces/${id}`),
+  updateProvince: (id, data) => api.put(`/admin/provinces/${id}`, data),
+  deleteProvince: (id) => api.delete(`/admin/provinces/${id}`),
+  getDistrictsByProvince: (provinceId) => api.get(`/admin/provinces/${provinceId}/districts`),
   
   // District management
   createDistrict: (data) => api.post('/admin/districts', data),
@@ -199,6 +212,8 @@ export const agencyAPI = {
   getDistricts: () => sharedAPI.getDistricts(),
   getRoutePoints: (districtId) => sharedAPI.getRoutePoints(districtId),
   getRoutes: () => sharedAPI.getRoutes(),
+  getProvinces: () => sharedAPI.getProvinces(),
+  getDistrictsByProvince: (provinceId) => sharedAPI.getDistrictsByProvince(provinceId),
 }
 
 // Customer APIs
@@ -225,6 +240,8 @@ export const customerAPI = {
   getDistricts: () => sharedAPI.getDistricts(),
   getRoutePoints: (districtId) => sharedAPI.getRoutePoints(districtId),
   searchSchedules: (params) => sharedAPI.searchSchedules(params),
+  getProvinces: () => sharedAPI.getProvinces(),
+  getDistrictsByProvince: (provinceId) => sharedAPI.getDistrictsByProvince(provinceId),
   
   // Guest booking
   createGuestBooking: (data) => api.post('/guest/bookings', data),
@@ -293,6 +310,8 @@ export const agentAPI = {
   // Access to districts and route points
   getDistricts: () => sharedAPI.getDistricts(),
   getRoutePoints: (districtId) => sharedAPI.getRoutePoints(districtId),
+  getProvinces: () => sharedAPI.getProvinces(),
+  getDistrictsByProvince: (provinceId) => sharedAPI.getDistrictsByProvince(provinceId),
   
   // Agent reports
   getDailyBookings: (agentId, date) => api.get(`/agent/reports/daily/${agentId}?date=${date}`),

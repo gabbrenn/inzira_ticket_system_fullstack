@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react'
-import { Plus, Edit, Trash2, MapPin, Save, X } from 'lucide-react'
+import { Plus, Edit, Trash2, MapPin, Save, X, Building2 } from 'lucide-react'
 import { adminAPI } from '../../services/api'
 import toast from 'react-hot-toast'
 
 const DistrictManagement = () => {
+  const [provinces, setProvinces] = useState([])
   const [districts, setDistricts] = useState([])
   const [routePoints, setRoutePoints] = useState({})
   const [loading, setLoading] = useState(false)
@@ -13,7 +14,10 @@ const DistrictManagement = () => {
   const [editingDistrict, setEditingDistrict] = useState(null)
   const [editingPoint, setEditingPoint] = useState(null)
 
-  const [districtForm, setDistrictForm] = useState({ name: '' })
+  const [districtForm, setDistrictForm] = useState({
+    name: '',
+    province: { id: '' }
+  })
   const [pointForm, setPointForm] = useState({
     name: '',
     gpsLat: '',
@@ -22,7 +26,17 @@ const DistrictManagement = () => {
 
   useEffect(() => {
     fetchDistricts()
+    fetchProvinces()
   }, [])
+
+  const fetchProvinces = async () => {
+    try {
+      const response = await adminAPI.getProvinces()
+      setProvinces(response.data.data || [])
+    } catch (error) {
+      toast.error('Failed to fetch provinces')
+    }
+  }
 
   const fetchDistricts = async () => {
     try {
@@ -53,7 +67,7 @@ const DistrictManagement = () => {
     try {
       await adminAPI.createDistrict(districtForm)
       toast.success('District created successfully')
-      setDistrictForm({ name: '' })
+      setDistrictForm({ name: '', province: { id: '' } })
       setShowDistrictForm(false)
       fetchDistricts()
     } catch (error) {
@@ -66,7 +80,7 @@ const DistrictManagement = () => {
     try {
       await adminAPI.updateDistrict(editingDistrict.id, districtForm)
       toast.success('District updated successfully')
-      setDistrictForm({ name: '' })
+      setDistrictForm({ name: '', province: { id: '' } })
       setEditingDistrict(null)
       fetchDistricts()
     } catch (error) {
@@ -134,7 +148,10 @@ const DistrictManagement = () => {
 
   const startEditDistrict = (district) => {
     setEditingDistrict(district)
-    setDistrictForm({ name: district.name })
+    setDistrictForm({
+      name: district.name,
+      province: { id: district.province?.id || '' }
+    })
   }
 
   const startEditPoint = (point) => {
@@ -154,9 +171,9 @@ const DistrictManagement = () => {
   return (
     <div className="px-4 sm:px-6 lg:px-8 fade-in">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">District Management</h1>
+        <h1 className="text-3xl font-bold text-gray-900">District & Route Points Management</h1>
         <p className="mt-2 text-gray-600">
-          Manage districts and their route points across Rwanda
+          Manage districts and their route points (organized by provinces)
         </p>
       </div>
 
@@ -196,6 +213,9 @@ const DistrictManagement = () => {
                     <div className="flex justify-between items-center">
                       <div>
                         <h3 className="font-medium text-gray-900">{district.name}</h3>
+                        <p className="text-sm text-gray-500">
+                          {district.province?.name || 'No Province'}
+                        </p>
                         <p className="text-sm text-gray-500">ID: {district.id}</p>
                       </div>
                       <div className="flex space-x-2">
@@ -327,6 +347,25 @@ const DistrictManagement = () => {
                 />
               </div>
 
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Province
+                </label>
+                <select
+                  value={districtForm.province.id}
+                  onChange={(e) => setDistrictForm({ ...districtForm, province: { id: e.target.value } })}
+                  className="input w-full"
+                  required
+                >
+                  <option value="">Select province</option>
+                  {provinces.map((province) => (
+                    <option key={province.id} value={province.id}>
+                      {province.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <div className="flex space-x-3">
                 <button type="submit" className="btn-primary flex-1">
                   <Save className="h-4 w-4 mr-2" />
@@ -337,7 +376,7 @@ const DistrictManagement = () => {
                   onClick={() => {
                     setShowDistrictForm(false)
                     setEditingDistrict(null)
-                    setDistrictForm({ name: '' })
+                    setDistrictForm({ name: '', province: { id: '' } })
                   }}
                   className="btn-secondary flex-1"
                 >

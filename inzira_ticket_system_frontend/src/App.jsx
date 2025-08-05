@@ -15,6 +15,7 @@ import Unauthorized from './pages/Unauthorized'
 
 // Admin pages
 import AdminDashboard from './pages/admin/AdminDashboard'
+import ProvinceManagement from './pages/admin/ProvinceManagement'
 import DistrictManagement from './pages/admin/DistrictManagement'
 import RouteManagement from './pages/admin/RouteManagement'
 import AgencyManagement from './pages/admin/AgencyManagement'
@@ -75,6 +76,13 @@ function App() {
                 <ProtectedRoute requiredRole="ADMIN">
                   <DashboardLayout>
                     <AdminDashboard />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/provinces" element={
+                <ProtectedRoute requiredRole="ADMIN">
+                  <DashboardLayout>
+                    <ProvinceManagement />
                   </DashboardLayout>
                 </ProtectedRoute>
               } />

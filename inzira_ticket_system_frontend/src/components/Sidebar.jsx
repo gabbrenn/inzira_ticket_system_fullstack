@@ -22,6 +22,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     if (hasRole('ADMIN')) {
       return [
         { name: 'Dashboard', href: '/admin', icon: Home },
+        { name: 'Provinces', href: '/admin/provinces', icon: Building2 },
         { name: 'Districts', href: '/admin/districts', icon: MapPin },
         { name: 'Routes', href: '/admin/routes', icon: Route },
         { name: 'Agencies', href: '/admin/agencies', icon: Building2 },
