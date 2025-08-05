@@ -1,32 +1,32 @@
 package com.inzira.shared.entities;
-import java.time.LocalDateTime;
-import jakarta.persistence.*;
-import lombok.Data;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import jakarta.persistence.*;
+import lombok.Data;
 
 @Entity
 @Data
-public class District {
-
+public class Province {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String name;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "province_id")
-    private Province province;
+    @Column(length = 500)
+    private String description;
 
-    @OneToMany(mappedBy = "district")
+    @OneToMany(mappedBy = "province", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
-    private List<RoutePoint> locations;
+    private List<District> districts;
 
     @CreationTimestamp
     @Column(updatable = false)
@@ -34,6 +34,6 @@ public class District {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
-    
-    public District() {}
+
+    public Province() {}
 }

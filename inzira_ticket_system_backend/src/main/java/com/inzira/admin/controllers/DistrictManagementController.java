@@ -6,7 +6,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.inzira.admin.services.DistrictService;
+import com.inzira.admin.services.ProvinceService;
 import com.inzira.shared.entities.District;
+import com.inzira.shared.entities.Province;
 import com.inzira.shared.entities.RoutePoint;
 import com.inzira.shared.exceptions.ApiResponse;
 import com.inzira.shared.services.RoutePointService;
@@ -21,11 +23,19 @@ public class DistrictManagementController {
     private DistrictService districtService;
 
     @Autowired
+    private ProvinceService provinceService;
+
+    @Autowired
     private RoutePointService routePointService;
 
     // Create District
     @PostMapping
     public ResponseEntity<ApiResponse<District>> createDistrict(@RequestBody District district) {
+        // Validate province exists
+        if (district.getProvince() == null || district.getProvince().getId() == null) {
+            throw new IllegalArgumentException("Province is required");
+        }
+        
         District createdDistrict = districtService.createDistrict(district);
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(new ApiResponse<>(true, "District created successfully", createdDistrict));

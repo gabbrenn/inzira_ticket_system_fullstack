@@ -6,7 +6,9 @@ import toast from 'react-hot-toast'
 
 const BranchOfficeManagement = () => {
   const [branchOffices, setBranchOffices] = useState([])
+  const [provinces, setProvinces] = useState([])
   const [districts, setDistricts] = useState([])
+  const [selectedProvince, setSelectedProvince] = useState('')
   const [loading, setLoading] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [editingOffice, setEditingOffice] = useState(null)
@@ -25,6 +27,7 @@ const BranchOfficeManagement = () => {
   useEffect(() => {
     if (user?.roleEntityId) {
       fetchBranchOffices()
+      fetchProvinces()
       fetchDistricts()
     }
   }, [user])
@@ -45,12 +48,40 @@ const BranchOfficeManagement = () => {
     }
   }
 
+  const fetchProvinces = async () => {
+    try {
+      const response = await agencyAPI.getProvinces()
+      setProvinces(response.data.data || [])
+    } catch (error) {
+      toast.error('Failed to fetch provinces')
+    }
+  }
+
   const fetchDistricts = async () => {
     try {
       const response = await agencyAPI.getDistricts()
       setDistricts(response.data.data || [])
     } catch (error) {
       toast.error('Failed to fetch districts')
+    }
+  }
+
+  const fetchDistrictsByProvince = async (provinceId) => {
+    try {
+      const response = await agencyAPI.getDistrictsByProvince(provinceId)
+      setDistricts(response.data.data || [])
+    } catch (error) {
+      toast.error('Failed to fetch districts for province')
+    }
+  }
+
+  const handleProvinceChange = (provinceId) => {
+    setSelectedProvince(provinceId)
+    setOfficeForm({ ...officeForm, district: { id: '' } })
+    if (provinceId) {
+      fetchDistrictsByProvince(provinceId)
+    } else {
+      fetchDistricts()
     }
   }
 
@@ -298,6 +329,24 @@ const BranchOfficeManagement = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Province
+                  </label>
+                  <select
+                    value={selectedProvince}
+                    onChange={(e) => handleProvinceChange(e.target.value)}
+                    className="input w-full"
+                  >
+                    <option value="">All Provinces</option>
+                    {provinces.map((province) => (
+                      <option key={province.id} value={province.id}>
+                        {province.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     District
                   </label>
                   <select
@@ -307,9 +356,11 @@ const BranchOfficeManagement = () => {
                     required
                   >
                     <option value="">Select district</option>
-                    {districts.map((district) => (
+                    {districts.filter(district => 
+                      !selectedProvince || district.province?.id.toString() === selectedProvince
+                    ).map((district) => (
                       <option key={district.id} value={district.id}>
-                        {district.name}
+                        {district.name} {district.province ? `(${district.province.name})` : ''}
                       </option>
                     ))}
                   </select>

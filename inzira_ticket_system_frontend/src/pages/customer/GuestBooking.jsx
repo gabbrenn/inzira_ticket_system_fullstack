@@ -14,7 +14,10 @@ const GuestBooking = () => {
     return <Navigate to="/customer/search" replace />
   }
 
+  const [provinces, setProvinces] = useState([])
   const [districts, setDistricts] = useState([])
+  const [selectedOriginProvince, setSelectedOriginProvince] = useState('')
+  const [selectedDestinationProvince, setSelectedDestinationProvince] = useState('')
   const [schedules, setSchedules] = useState([])
   const [routePoints, setRoutePoints] = useState({})
   const [loading, setLoading] = useState(false)
@@ -41,11 +44,21 @@ const GuestBooking = () => {
   })
 
   useEffect(() => {
+    fetchProvinces()
     fetchDistricts()
     // Set default date to today
     const today = new Date().toISOString().split('T')[0]
     setSearchForm(prev => ({ ...prev, departureDate: today }))
   }, [])
+
+  const fetchProvinces = async () => {
+    try {
+      const response = await customerAPI.getProvinces()
+      setProvinces(response.data.data || [])
+    } catch (error) {
+      console.error('Failed to fetch provinces:', error)
+    }
+  }
 
   const fetchDistricts = async () => {
     try {
@@ -58,6 +71,21 @@ const GuestBooking = () => {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleOriginProvinceChange = (provinceId) => {
+    setSelectedOriginProvince(provinceId)
+    setSearchForm({ ...searchForm, originId: '' })
+  }
+
+  const handleDestinationProvinceChange = (provinceId) => {
+    setSelectedDestinationProvince(provinceId)
+    setSearchForm({ ...searchForm, destinationId: '' })
+  }
+
+  const getFilteredDistricts = (provinceFilter) => {
+    if (!provinceFilter) return districts
+    return districts.filter(district => district.province?.id.toString() === provinceFilter)
   }
 
   const fetchRoutePoints = async (districtId) => {
@@ -251,7 +279,25 @@ const GuestBooking = () => {
       {/* Search Form */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
         <form onSubmit={handleSearch}>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Origin Province
+              </label>
+              <select
+                value={selectedOriginProvince}
+                onChange={(e) => handleOriginProvinceChange(e.target.value)}
+                className="input w-full"
+              >
+                <option value="">All Provinces</option>
+                {provinces.map((province) => (
+                  <option key={province.id} value={province.id}>
+                    {province.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 From
@@ -263,9 +309,27 @@ const GuestBooking = () => {
                 required
               >
                 <option value="">Select origin</option>
-                {districts.map((district) => (
+                {getFilteredDistricts(selectedOriginProvince).map((district) => (
                   <option key={district.id} value={district.id}>
-                    {district.name}
+                    {district.name} {district.province ? `(${district.province.name})` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Destination Province
+              </label>
+              <select
+                value={selectedDestinationProvince}
+                onChange={(e) => handleDestinationProvinceChange(e.target.value)}
+                className="input w-full"
+              >
+                <option value="">All Provinces</option>
+                {provinces.map((province) => (
+                  <option key={province.id} value={province.id}>
+                    {province.name}
                   </option>
                 ))}
               </select>
@@ -282,9 +346,9 @@ const GuestBooking = () => {
                 required
               >
                 <option value="">Select destination</option>
-                {districts.map((district) => (
+                {getFilteredDistricts(selectedDestinationProvince).map((district) => (
                   <option key={district.id} value={district.id}>
-                    {district.name}
+                    {district.name} {district.province ? `(${district.province.name})` : ''}
                   </option>
                 ))}
               </select>
