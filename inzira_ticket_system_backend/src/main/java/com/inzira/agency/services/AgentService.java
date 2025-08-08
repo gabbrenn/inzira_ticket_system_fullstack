@@ -62,7 +62,6 @@ public class AgentService {
 
         // Generate initial password
         String rawPassword = passwordUtility.generateInitialPassword(agent.getFirstName(), agent.getPhoneNumber());
-        agent.setPassword(passwordEncoder.encode(rawPassword));
 
         agent.setAgency(agency);
         agent.setBranchOffice(branchOffice);
@@ -167,9 +166,7 @@ public class AgentService {
             .orElseThrow(() -> new ResourceNotFoundException("Agent not found"));
 
         String newPassword = passwordUtility.generateInitialPassword(agent.getFirstName(), agent.getPhoneNumber());
-        agent.setPassword(passwordEncoder.encode(newPassword));
 
-        agentRepository.save(agent);
 
         // Also update the User entity
         userRepository.findByEmail(agent.getEmail()).ifPresent(user -> {

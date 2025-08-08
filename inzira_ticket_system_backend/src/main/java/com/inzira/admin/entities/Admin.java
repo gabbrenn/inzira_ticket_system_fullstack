@@ -23,9 +23,6 @@ public class Admin {
     @Column(nullable = false)
     private String phoneNumber;
 
-    @Column(nullable = false)
-    private String password;
-
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;

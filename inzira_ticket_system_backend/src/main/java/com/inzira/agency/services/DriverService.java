@@ -11,6 +11,8 @@ import com.inzira.agency.repositories.AgencyRepository;
 import com.inzira.shared.entities.Driver;
 import com.inzira.shared.exceptions.ResourceNotFoundException;
 import com.inzira.shared.repositories.DriverRepository;
+import com.inzira.shared.entities.User;
+import com.inzira.shared.repositories.UserRepository;
 import com.inzira.shared.utils.PasswordUtility;
 
 @Service
@@ -27,6 +29,9 @@ public class DriverService {
 
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
+
+    @Autowired
+    private UserRepository userRepository;
 
     public Driver createDriver(Driver driver) {
         // Validate agency exists
@@ -45,11 +50,33 @@ public class DriverService {
 
         // Generate initial password
         String rawPassword = passwordUtility.generateInitialPassword(driver.getFirstName(), driver.getPhoneNumber());
-        driver.setPassword(passwordEncoder.encode(rawPassword));
 
         driver.setAgency(agency);
         driver.setStatus("ACTIVE"); // Default status
-        return driverRepository.save(driver);
+        Driver savedDriver = driverRepository.save(driver);
+
+        // Create corresponding User entity for authentication
+        User user = new User();
+        user.setEmail(savedDriver.getEmail());
+        user.setPassword(passwordEncoder.encode(rawPassword));
+        user.setFirstName(savedDriver.getFirstName());
+        user.setLastName(savedDriver.getLastName());
+        user.setPhoneNumber(savedDriver.getPhoneNumber());
+        user.setRole(User.UserRole.DRIVER);
+        user.setStatus("ACTIVE");
+        user.setRoleEntityId(savedDriver.getId());
+        userRepository.save(user);
+
+        // Update corresponding User entity
+        userRepository.findByEmail(savedDriver.getEmail()).ifPresent(user -> {
+            user.setFirstName(savedDriver.getFirstName());
+            user.setLastName(savedDriver.getLastName());
+            user.setPhoneNumber(savedDriver.getPhoneNumber());
+            user.setStatus(savedDriver.getStatus());
+            userRepository.save(user);
+        });
+
+        return savedDriver;
     }
 
     public List<Driver> getAllDrivers() {
@@ -100,16 +127,26 @@ public class DriverService {
             .orElseThrow(() -> new ResourceNotFoundException("Driver not found"));
 
         String newPassword = passwordUtility.generateInitialPassword(driver.getFirstName(), driver.getPhoneNumber());
-        driver.setPassword(passwordEncoder.encode(newPassword));
 
-        driverRepository.save(driver);
+
+        // Also update the User entity
+        userRepository.findByEmail(driver.getEmail()).ifPresent(user -> {
+            user.setPassword(passwordEncoder.encode(newPassword));
+            userRepository.save(user);
+        });
+
         return newPassword;
     }
 
     public void deleteDriver(Long id) {
-        if (!driverRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Driver not found with ID: " + id);
-        }
+        Driver driver = driverRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Driver not found with ID: " + id));
+
+        // Delete corresponding User entity
+        userRepository.findByEmail(driver.getEmail()).ifPresent(user -> {
+            userRepository.delete(user);
+        });
+
         driverRepository.deleteById(id);
     }
 }

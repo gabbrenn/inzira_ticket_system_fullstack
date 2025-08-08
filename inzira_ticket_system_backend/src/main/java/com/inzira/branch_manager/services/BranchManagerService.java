@@ -67,7 +67,6 @@ public class BranchManagerService {
 
         // Generate initial password
         String rawPassword = passwordUtility.generateInitialPassword(branchManager.getFirstName(), branchManager.getPhoneNumber());
-        branchManager.setPassword(passwordEncoder.encode(rawPassword));
 
         branchManager.setAgency(agency);
         branchManager.setBranchOffice(branchOffice);
@@ -147,9 +146,7 @@ public class BranchManagerService {
             .orElseThrow(() -> new ResourceNotFoundException("Branch manager not found"));
 
         String newPassword = passwordUtility.generateInitialPassword(branchManager.getFirstName(), branchManager.getPhoneNumber());
-        branchManager.setPassword(passwordEncoder.encode(newPassword));
 
-        branchManagerRepository.save(branchManager);
 
         // Also update the User entity
         userRepository.findByEmail(branchManager.getEmail()).ifPresent(user -> {

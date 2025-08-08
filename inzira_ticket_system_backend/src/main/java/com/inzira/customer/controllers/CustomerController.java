@@ -21,6 +21,10 @@ public class CustomerController {
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<Customer>> registerCustomer(@RequestBody Customer customer) {
         Customer registeredCustomer = customerService.registerCustomer(customer);
+        
+        // Remove password from response for security
+        registeredCustomer.setPassword(null);
+        
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(new ApiResponse<>(true, "Customer registered successfully", registeredCustomer));
     }

@@ -72,7 +72,6 @@ public class AuthService {
                 admin.setUsername(request.getEmail());
                 admin.setEmail(request.getEmail());
                 admin.setPhoneNumber(request.getPhoneNumber());
-                admin.setPassword(passwordEncoder.encode(request.getPassword()));
                 admin = adminRepository.save(admin);
                 roleEntityId = admin.getId();
                 System.out.println("Created admin with ID: " + roleEntityId);
@@ -88,7 +87,6 @@ public class AuthService {
                 customer.setLastName(request.getLastName());
                 customer.setEmail(request.getEmail());
                 customer.setPhoneNumber(request.getPhoneNumber());
-                customer.setPassword(passwordEncoder.encode(request.getPassword()));
                 customer.setStatus("ACTIVE");
                 customer = customerRepository.save(customer);
                 roleEntityId = customer.getId();

@@ -68,7 +68,6 @@ public class AgencyRegistrationService {
             } else {
                 rawPassword = passwordUtility.generateInitialPassword(registrationDTO.getAgencyName(), registrationDTO.getPhoneNumber());
             }
-            agency.setPassword(passwordUtility.encodePassword(rawPassword));
 
             // Store file and set path
             String filePath = fileStorageService.storeFile(file, "user-profile");
@@ -80,13 +79,11 @@ public class AgencyRegistrationService {
             // Create corresponding User entity for authentication
             User user = new User();
             user.setEmail(savedAgency.getEmail());
-            user.setPassword(passwordEncoder.encode(rawPassword));
             user.setFirstName(savedAgency.getAgencyName());
-            user.setLastName("Agency");
             user.setPhoneNumber(savedAgency.getPhoneNumber());
             user.setRole(User.UserRole.AGENCY);
             user.setStatus("ACTIVE");
-            user.setRoleEntityId(savedAgency.getId());
+            user.setPassword(passwordEncoder.encode(newPassword));
             userRepository.save(user);
 
             // Map saved entity to DTO and return

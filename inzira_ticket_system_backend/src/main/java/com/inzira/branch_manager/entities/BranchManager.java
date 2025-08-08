@@ -31,9 +31,6 @@ public class BranchManager {
     private String phoneNumber;
 
     @Column(nullable = false)
-    private String password;
-
-    @Column(nullable = false)
     private String status; // ACTIVE, INACTIVE, SUSPENDED
 
     @ManyToOne(optional = false)

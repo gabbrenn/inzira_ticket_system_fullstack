@@ -27,6 +27,10 @@ public class AuthController {
         try {
             User user = authService.registerUser(request);
             System.out.println("Registration successful for: " + request.getEmail());
+            
+            // Remove password from response for security
+            user.setPassword(null);
+            
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(new ApiResponse<>(true, "User registered successfully", user));
         } catch (IllegalArgumentException e) {

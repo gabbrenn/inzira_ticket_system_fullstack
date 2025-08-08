@@ -86,7 +86,7 @@ public class TicketVerificationService {
         
         TicketVerificationResponse response = new TicketVerificationResponse();
         response.setValid(true);
-        response.setMessage("Schedule bookings retrieved successfully");
+        response.setMessage("Schedule bookings retrieved successfully. Total passengers: " + bookings.size());
         response.setStatus("SUCCESS");
         response.setScheduleInfo(schedule.getAgencyRoute().getRoute().getOrigin().getName() + " → " + 
                                 schedule.getAgencyRoute().getRoute().getDestination().getName());

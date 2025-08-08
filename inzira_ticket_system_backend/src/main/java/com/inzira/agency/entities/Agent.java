@@ -28,9 +28,6 @@ public class Agent {
     private String phoneNumber;
 
     @Column(nullable = false)
-    private String password;
-
-    @Column(nullable = false)
     private String status; // ACTIVE, INACTIVE, SUSPENDED
 
     @Column(nullable = false)

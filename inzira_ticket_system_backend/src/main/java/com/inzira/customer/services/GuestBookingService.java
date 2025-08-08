@@ -154,7 +154,6 @@ public class GuestBookingService {
         customer.setLastName(request.getCustomerLastName());
         customer.setEmail(request.getCustomerEmail() != null ? request.getCustomerEmail() : generateTempEmail(request));
         customer.setPhoneNumber(request.getCustomerPhoneNumber());
-        customer.setPassword(passwordEncoder.encode("guest123")); // Temporary password for guest users
         customer.setStatus("ACTIVE");
 
         return customerRepository.save(customer);

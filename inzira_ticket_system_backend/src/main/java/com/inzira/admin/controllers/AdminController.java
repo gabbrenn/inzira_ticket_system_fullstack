@@ -23,6 +23,10 @@ public class AdminController {
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<Admin>> registerAdmin(@RequestBody Admin admin) {
         Admin registeredAdmin = adminService.registerAdmin(admin);
+        
+        // Remove password from response for security
+        registeredAdmin.setPassword(null);
+        
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(new ApiResponse<>(true, "Admin registered successfully", registeredAdmin));
     }

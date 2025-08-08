@@ -33,9 +33,6 @@ public class Driver {
     private String licenseNumber;
 
     @Column(nullable = false)
-    private String password;
-
-    @Column(nullable = false)
     private String status; // ACTIVE, INACTIVE, SUSPENDED
 
     @ManyToOne(optional = false)

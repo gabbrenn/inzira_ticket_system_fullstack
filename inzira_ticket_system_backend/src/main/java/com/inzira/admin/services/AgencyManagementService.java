@@ -84,13 +84,11 @@ public class AgencyManagementService {
                 .orElseThrow(() -> new ResourceNotFoundException("Agency not found"));
 
         String newPassword = passwordUtility.generateInitialPassword(agency.getAgencyName(), agency.getPhoneNumber());
-        agency.setPassword(passwordUtility.encodePassword(newPassword));
 
-        agencyRepository.save(agency);
 
         // Also update the User entity if it exists
         userRepository.findByEmail(agency.getEmail()).ifPresent(user -> {
-            user.setPassword(passwordUtility.encodePassword(newPassword));
+            user.setPassword(passwordEncoder.encode(newPassword));
             userRepository.save(user);
         });
 

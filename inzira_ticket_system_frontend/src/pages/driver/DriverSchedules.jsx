@@ -46,7 +46,7 @@ const DriverSchedules = () => {
 
   const fetchScheduleBookings = async (scheduleId) => {
     try {
-      const response = await driverAPI.getScheduleBookings(scheduleId, user.roleEntityId)
+      const response = await customerAPI.getBookingsBySchedule(scheduleId)
       setScheduleBookings(response.data.data || [])
     } catch (error) {
       toast.error('Failed to fetch schedule bookings')
