@@ -1,0 +1,36 @@
+[33m40e3788[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m Authentication System Analysis and Fixes
+[33m7827dbc[m Fix Driver User Creation, Passenger List, and Data Duplication
+[33m2044378[m Fix DriverTicketVerification.jsx syntax errors
+[33m1f44578[m Add Province Organization and QR Camera Scanning
+[33m816609c[m Implement Driver Panel with Schedule View and Ticket Verification
+[33m9f476c3[m Fix Sidebar and home page issue
+[33m068a663[m Dashboard and Sidebar UI Improvements
+[33mff1f657[m Fix Ticket Search
+[33me9f6e58[m Resolve marge conflict
+[33m925571c[m My Update
+[33m7eb431c[m Inzira Platform Enhancements and Fixes
+[33m9a50add[m Merge branch 'main' of https://github.com/gabbrenn/inzira_ticket_system_fullstack Update profiles
+[33mab1144d[m Update profiles
+[33m67c2f72[m Inzira Ticket System Improvements
+[33mab158c3[m Inzira System Improvements - Role-based Access and Enhanced Features
+[33m19041a7[m Update project README
+[33me8f8067[m Add change
+[33m4cfde85[m Fix Branch Manager and Agent System
+[33m4841c03[m Fix Bean Name Conflict for BranchManagerController
+[33m0f3aa26[m Implement Branch Manager Creation for Agencies
+[33m25fe0da[m Fix Layout
+[33mb827b0a[m Implement Branch Manager Role and Functionality
+[33m3c6d6c7[m Add Missing Agency Functionalities
+[33me6f528d[m Fix Security Configuration Order
+[33m43ddc17[m Fix Agency Login and Data Management
+[33mbef70b9[m Fix Agency Login and Customer API Access Issues
+[33mab91824[m Fix Agency Login and Customer Issues
+[33m269f15d[m Fix Authentication System Issues
+[33mc73b447[m Fix Login System Issues
+[33mb80625b[m Complete System Implementation with All Requested Features
+[33mdc047a8[m Fix Agency Update Multipart Form Data Issue
+[33m08b61bb[m Fix JWT Secret Key Length Issue
+[33m0e10922[m Complete User Registration and Login System Implementation
+[33m8d585fa[m Complete Frontend Features Implementation
+[33m60cd9d2[m Initial commit with both frontend and backend
+[33ma869460[m Initial commit with both frontend and backend
