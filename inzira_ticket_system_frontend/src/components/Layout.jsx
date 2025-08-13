@@ -37,7 +37,8 @@ const Layout = ({ children }) => {
             <div className="flex">
               <div className="flex-shrink-0 flex items-center">
                 <Bus className="h-8 w-8 text-primary-600" />
-                <span className="ml-2 text-xl font-bold text-gray-900">Inzira</span>
+                <Link 
+                to="/" className="ml-2 text-xl font-bold text-gray-900">Inzira</Link>
               </div>
             </div>
 
