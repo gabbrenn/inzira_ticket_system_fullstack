@@ -91,6 +91,7 @@ public class TicketVerificationService {
         response.setScheduleInfo(schedule.getAgencyRoute().getRoute().getOrigin().getName() + " → " + 
                                 schedule.getAgencyRoute().getRoute().getDestination().getName());
         response.setAgencyName(schedule.getAgencyRoute().getAgency().getAgencyName());
+        response.setBookings(bookings);
         
         return response;
     }

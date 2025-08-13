@@ -48,4 +48,6 @@ public class TicketVerificationController {
         TicketVerificationResponse response = ticketVerificationService.getScheduleBookingsForDriver(driverId, scheduleId);
         return ResponseEntity.ok(new ApiResponse<>(true, "Schedule bookings retrieved", response));
     }
+
+    
 }

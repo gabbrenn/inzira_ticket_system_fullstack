@@ -45,13 +45,17 @@ const DriverSchedules = () => {
   }
 
   const fetchScheduleBookings = async (scheduleId) => {
-    try {
-      const response = await driverAPI.getScheduleBookings(scheduleId, user.roleEntityId)
-      setScheduleBookings(response.data.data || [])
-    } catch (error) {
-      toast.error('Failed to fetch schedule bookings')
-    }
+  try {
+    const response = await driverAPI.getScheduleBookings(scheduleId, user.roleEntityId)
+    const bookingsArray = Array.isArray(response.data.data.bookings) ? response.data.data.bookings : []
+    console.log(bookingsArray)
+    setScheduleBookings(bookingsArray)
+  } catch (error) {
+    toast.error('Failed to fetch schedule bookings')
+    setScheduleBookings([])
   }
+}
+
 
   const applyFilters = () => {
     let filtered = [...schedules]
@@ -277,7 +281,7 @@ const DriverSchedules = () => {
                 <div><strong>Total Passengers:</strong> {scheduleBookings.length}</div>
               </div>
             </div>
-
+            
             <div className="overflow-x-auto">
               {scheduleBookings.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">

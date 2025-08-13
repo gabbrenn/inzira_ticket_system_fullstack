@@ -9,8 +9,10 @@ import org.springframework.stereotype.Service;
 import com.inzira.agency.entities.Agency;
 import com.inzira.agency.repositories.AgencyRepository;
 import com.inzira.shared.entities.Driver;
+import com.inzira.shared.entities.User;
 import com.inzira.shared.exceptions.ResourceNotFoundException;
 import com.inzira.shared.repositories.DriverRepository;
+import com.inzira.shared.repositories.UserRepository;
 import com.inzira.shared.utils.PasswordUtility;
 
 @Service
@@ -21,12 +23,14 @@ public class DriverService {
 
     @Autowired
     private AgencyRepository agencyRepository;
-
     @Autowired
     private PasswordUtility passwordUtility;
 
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
+
+    @Autowired
+    private UserRepository userRepository;
 
     public Driver createDriver(Driver driver) {
         // Validate agency exists
@@ -46,10 +50,25 @@ public class DriverService {
         // Generate initial password
         String rawPassword = passwordUtility.generateInitialPassword(driver.getFirstName(), driver.getPhoneNumber());
         driver.setPassword(passwordEncoder.encode(rawPassword));
-
         driver.setAgency(agency);
         driver.setStatus("ACTIVE"); // Default status
-        return driverRepository.save(driver);
+        Driver savedDriver = driverRepository.save(driver);
+        // Optionally, you can send the initial password to the driver via email or other means
+        // emailService.sendInitialPassword(driver.getEmail(), rawPassword);
+
+        // Create corresponding User entity for authentication
+        User user = new User();
+        user.setEmail(driver.getEmail());
+        user.setPassword(driver.getPassword());
+        user.setRole(User.UserRole.DRIVER);
+        user.setFirstName(driver.getFirstName());
+        user.setLastName(driver.getLastName());
+        user.setPhoneNumber(driver.getPhoneNumber());
+        user.setStatus("ACTIVE");
+        user.setRoleEntityId(savedDriver.getId());
+        userRepository.save(user);
+            
+        return savedDriver;
     }
 
     public List<Driver> getAllDrivers() {
