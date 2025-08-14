@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import { Menu, X, LogOut } from 'lucide-react'
+import {Bus, Menu, X, LogOut } from 'lucide-react'
+import {Link} from 'react-router-dom'
 import Sidebar from './Sidebar'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -22,10 +23,9 @@ const DashboardLayout = ({ children }) => {
             <div className="flex justify-between items-center h-16">
               <div className="flex items-center">
                 <div className="flex-shrink-0 flex items-center">
-                  <div className="h-8 w-8 bg-primary-600 rounded-lg flex items-center justify-center">
-                    <span className="text-white font-bold text-sm">I</span>
-                  </div>
-                  <span className="ml-2 text-xl font-bold text-gray-900">Inzira</span>
+                  
+                  <Bus className="h-8 w-8 text-primary-600" />
+                  <Link to="/" className="ml-2 text-xl font-bold text-gray-900">Inzira</Link>
                 </div>
               </div>
               
