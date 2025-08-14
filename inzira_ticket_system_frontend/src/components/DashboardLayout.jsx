@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Menu, X, LogOut, ArrowLeft, Key } from 'lucide-react'
+import { Bus, Menu, X, LogOut, ArrowLeft, Key } from 'lucide-react'
 import Sidebar from './Sidebar'
 import { useAuth } from '../contexts/AuthContext'
 import { Link, useNavigate } from 'react-router-dom'
