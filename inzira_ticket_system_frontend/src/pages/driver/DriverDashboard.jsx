@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Calendar, UserCheck, User, Clock, MapPin, Activity, TrendingUp, Bus, AlertTriangle } from 'lucide-react'
+import { Calendar, UserCheck, User, Clock, MapPin, Activity, TrendingUp, Bus, AlertTriangle, ArrowRight } from 'lucide-react'
 import { driverAPI } from '../../services/api'
 import { useAuth } from '../../contexts/AuthContext'
 import DashboardCard from '../../components/DashboardCard'
@@ -126,35 +126,33 @@ const DriverDashboard = () => {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-6">Quick Actions</h2>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-4">
               <Link
                 to="/driver/schedules"
-                className="group p-6 border border-gray-200 rounded-lg hover:border-primary-300 hover:shadow-md transition-all"
+                className="group flex items-center p-4 border border-gray-200 rounded-lg hover:border-primary-300 hover:shadow-md transition-all"
               >
-                <div className="flex items-center mb-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
-                    <Calendar className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <div className="ml-4">
-                    <h3 className="text-lg font-semibold text-gray-900">View Schedules</h3>
-                    <p className="text-sm text-gray-600">Check your assigned trips</p>
-                  </div>
+                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                  <Calendar className="h-5 w-5 text-blue-600" />
                 </div>
+                <div className="ml-4 flex-1">
+                  <h3 className="text-lg font-semibold text-gray-900">View My Schedules</h3>
+                  <p className="text-sm text-gray-600">Check your assigned trips and passenger lists</p>
+                </div>
+                <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-primary-600 transition-colors" />
               </Link>
 
               <Link
                 to="/driver/verification"
-                className="group p-6 border border-gray-200 rounded-lg hover:border-primary-300 hover:shadow-md transition-all"
+                className="group flex items-center p-4 border border-gray-200 rounded-lg hover:border-primary-300 hover:shadow-md transition-all"
               >
-                <div className="flex items-center mb-4">
-                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition-colors">
-                    <UserCheck className="h-6 w-6 text-green-600" />
-                  </div>
-                  <div className="ml-4">
-                    <h3 className="text-lg font-semibold text-gray-900">Verify Tickets</h3>
-                    <p className="text-sm text-gray-600">Scan or check passenger tickets</p>
-                  </div>
+                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition-colors">
+                  <UserCheck className="h-5 w-5 text-green-600" />
                 </div>
+                <div className="ml-4 flex-1">
+                  <h3 className="text-lg font-semibold text-gray-900">Verify Tickets</h3>
+                  <p className="text-sm text-gray-600">Scan QR codes or verify booking references</p>
+                </div>
+                <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-primary-600 transition-colors" />
               </Link>
             </div>
 
@@ -165,6 +163,7 @@ const DriverDashboard = () => {
                 <div className="text-center py-4 text-gray-500">
                   <Calendar className="h-8 w-8 mx-auto mb-2 text-gray-300" />
                   <p className="text-sm">No schedules assigned for today</p>
+                  <p className="text-xs text-gray-400 mt-1">Enjoy your day off!</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -188,6 +187,14 @@ const DriverDashboard = () => {
                       </div>
                     </div>
                   ))}
+                  {todaySchedules.length > 3 && (
+                    <Link
+                      to="/driver/schedules"
+                      className="block text-center text-sm text-primary-600 hover:text-primary-800 py-2"
+                    >
+                      View all {todaySchedules.length} schedules →
+                    </Link>
+                  )}
                 </div>
               )}
             </div>

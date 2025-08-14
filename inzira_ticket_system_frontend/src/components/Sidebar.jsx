@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { 
   Home, Settings, Users, MapPin, Route, Building2, Bus, Calendar, 
   BarChart3, UserCheck, Crown, User, CreditCard, ClipboardList,
-  ChevronRight, LogOut, X
+  ChevronRight, LogOut, X, Key
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import toast from 'react-hot-toast'
@@ -22,6 +22,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     if (hasRole('ADMIN')) {
       return [
         { name: 'Dashboard', href: '/admin', icon: Home },
+        { name: 'Change Password', href: '/change-password', icon: Key },
         { name: 'Provinces', href: '/admin/provinces', icon: Building2 },
         { name: 'Districts', href: '/admin/districts', icon: MapPin },
         { name: 'Routes', href: '/admin/routes', icon: Route },
@@ -33,6 +34,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       return [
         { name: 'Dashboard', href: '/agency', icon: Home },
         { name: 'Profile', href: '/agency/profile', icon: User },
+        { name: 'Change Password', href: '/change-password', icon: Key },
         { name: 'Branch Offices', href: '/agency/branch-offices', icon: Building2 },
         { name: 'Branch Managers', href: '/agency/branch-managers', icon: Crown },
         { name: 'Agents', href: '/agency/agents', icon: UserCheck },
@@ -47,6 +49,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     if (hasRole('BRANCH_MANAGER')) {
       return [
         { name: 'Dashboard', href: '/branch-manager', icon: Home },
+        { name: 'Change Password', href: '/change-password', icon: Key },
         { name: 'Agents', href: '/branch-manager/agents', icon: Users },
         { name: 'Schedules', href: '/branch-manager/schedules', icon: Calendar },
         { name: 'Reports', href: '/branch-manager/reports', icon: BarChart3 },
@@ -56,6 +59,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     if (hasRole('AGENT')) {
       return [
         { name: 'Dashboard', href: '/agent', icon: Home },
+        { name: 'Change Password', href: '/change-password', icon: Key },
         { name: 'Booking Management', href: '/agent/bookings', icon: CreditCard },
         { name: 'Profile', href: '/agent/profile', icon: User },
         { name: 'Reports', href: '/agent/reports', icon: ClipboardList },
@@ -65,6 +69,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     if (hasRole('DRIVER')) {
       return [
         { name: 'Dashboard', href: '/driver', icon: Home },
+        { name: 'Change Password', href: '/change-password', icon: Key },
         { name: 'My Schedules', href: '/driver/schedules', icon: Calendar },
         { name: 'Ticket Verification', href: '/driver/verification', icon: UserCheck },
         { name: 'Profile', href: '/driver/profile', icon: User },
