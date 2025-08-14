@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Eye, EyeOff, Lock, Save, ArrowLeft } from 'lucide-react'
-import { useAuth } from '../../contexts/AuthContext'
+import { authAPI } from '../../services/api'
 import { useNavigate, Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 
@@ -10,7 +10,6 @@ const ChangePassword = () => {
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading] = useState(false)
-  const { user } = useAuth()
   const navigate = useNavigate()
 
   const {
@@ -25,12 +24,14 @@ const ChangePassword = () => {
   const onSubmit = async (data) => {
     try {
       setLoading(true)
-      // Since we don't have a specific change password endpoint,
-      // we'll show a success message for now
+      await authAPI.changePassword({
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword
+      })
       toast.success('Password changed successfully!')
       navigate(-1) // Go back to previous page
     } catch (error) {
-      toast.error('Failed to change password')
+      toast.error(error.response?.data?.message || 'Failed to change password')
     } finally {
       setLoading(false)
     }

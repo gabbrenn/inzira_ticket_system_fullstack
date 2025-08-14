@@ -1,11 +1,15 @@
 import React, { useState } from 'react'
-import { Menu, X, LogOut } from 'lucide-react'
+import { Menu, X, LogOut, ArrowLeft, Key } from 'lucide-react'
 import Sidebar from './Sidebar'
 import { useAuth } from '../contexts/AuthContext'
+import { Link, useNavigate } from 'react-router-dom'
+import CustomerNavigation from './CustomerNavigation'
+import DriverNavigation from './DriverNavigation'
 
 const DashboardLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { logout, user, hasRole } = useAuth()
+  const navigate = useNavigate()
 
   const handleLogout = () => {
     logout()
@@ -21,6 +25,13 @@ const DashboardLayout = ({ children }) => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
               <div className="flex items-center">
+                <button
+                  onClick={() => navigate(-1)}
+                  className="mr-4 p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100"
+                  title="Go Back"
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </button>
                 <div className="flex-shrink-0 flex items-center">
                   <div className="h-8 w-8 bg-primary-600 rounded-lg flex items-center justify-center">
                     <span className="text-white font-bold text-sm">I</span>
@@ -36,12 +47,19 @@ const DashboardLayout = ({ children }) => {
                     {user?.role}
                   </span>
                 </div>
+                <Link
+                  to="/change-password"
+                  className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 hover:text-gray-700 focus:outline-none transition"
+                >
+                  <Key className="h-4 w-4 mr-1" />
+                  <span className="hidden sm:inline">Password</span>
+                </Link>
                 <button
                   onClick={handleLogout}
                   className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 hover:text-gray-700 focus:outline-none transition"
                 >
                   <LogOut className="h-4 w-4 mr-1" />
-                  Logout
+                  <span className="hidden sm:inline">Logout</span>
                 </button>
               </div>
             </div>
@@ -50,7 +68,12 @@ const DashboardLayout = ({ children }) => {
 
         {/* Content with max-width container */}
         <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-          {children}
+          {/* Tab Navigation for Customer and Driver */}
+          {hasRole('CUSTOMER') && <CustomerNavigation />}
+          {hasRole('DRIVER') && <DriverNavigation />}
+          <div className="px-4 sm:px-6 lg:px-8">
+            {children}
+          </div>
         </main>
       </div>
     )

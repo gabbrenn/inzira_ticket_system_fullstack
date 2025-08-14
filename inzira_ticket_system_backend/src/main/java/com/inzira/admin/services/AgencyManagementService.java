@@ -115,6 +115,7 @@ public class AgencyManagementService {
      // 🔧 Utility: Handle logo replacement
     private void handleLogoUpdate(Agency agency, MultipartFile logoFile) {
         try {
+            // Delete old logo before storing new one
             deleteLogoIfExists(agency.getLogoPath());
             String newLogoPath = fileStorageService.storeFile(logoFile, "user-profile");
             agency.setLogoPath(newLogoPath);
@@ -126,9 +127,21 @@ public class AgencyManagementService {
     // 🔧 Utility: Delete logo file if it exists
     private void deleteLogoIfExists(String logoPath) {
         if (logoPath != null && !logoPath.isBlank()) {
-            Path fullPath = Paths.get("uploads").resolve(logoPath);
+            // Extract just the filename from the full URL path
+            String fileName = logoPath;
+            if (logoPath.contains("/uploads/")) {
+                fileName = logoPath.substring(logoPath.lastIndexOf("/uploads/") + 9);
+            }
+            Path fullPath = Paths.get("uploads").resolve(fileName);
             File file = fullPath.toFile();
-            if (file.exists()) file.delete();
+            if (file.exists()) {
+                boolean deleted = file.delete();
+                if (deleted) {
+                    System.out.println("Successfully deleted old logo: " + fileName);
+                } else {
+                    System.err.println("Failed to delete old logo: " + fileName);
+                }
+            }
         }
     }
 }
