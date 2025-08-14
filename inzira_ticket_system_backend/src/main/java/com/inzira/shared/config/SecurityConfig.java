@@ -52,6 +52,9 @@ public class SecurityConfig {
                 .requestMatchers("/api/admin/routes").hasAnyRole("ADMIN", "AGENCY","AGENT")
                 .requestMatchers("/api/admin/routes/**").hasAnyRole("ADMIN", "AGENCY")
                 .requestMatchers("/api/agency/schedules/**").permitAll()
+                
+                // Password change - accessible by all authenticated users
+                .requestMatchers("/api/auth/change-password").authenticated()
     
                 
                 // Admin endpoints

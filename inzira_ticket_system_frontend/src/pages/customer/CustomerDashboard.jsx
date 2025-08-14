@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, Calendar, CreditCard, MapPin, Clock, ArrowRight, TrendingUp, Users, CheckCircle } from 'lucide-react'
+import { Search, Calendar, CreditCard, MapPin, Clock, ArrowRight, TrendingUp, Users, CheckCircle, Star, Award } from 'lucide-react'
 import { customerAPI } from '../../services/api'
 import { useAuth } from '../../contexts/AuthContext'
 import toast from 'react-hot-toast'
@@ -62,29 +62,16 @@ const CustomerDashboard = () => {
 
   return (
     <div className="fade-in">
-      {/* Hero Section */}
-      <div className="bg-gradient-to-r from-primary-600 to-primary-800 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold mb-4">
-              Welcome back, {user?.firstName}!
-            </h1>
-            <p className="text-xl text-primary-100 mb-8">
-              Ready for your next journey? Let's find the perfect bus for you.
-            </p>
-            <Link
-              to="/customer/search"
-              className="inline-flex items-center px-6 py-3 bg-white text-primary-600 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <Search className="h-5 w-5 mr-2" />
-              Search Schedules
-              <ArrowRight className="h-5 w-5 ml-2" />
-            </Link>
-          </div>
-        </div>
+      {/* Welcome Section */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">
+          Welcome back, {user?.firstName}!
+        </h1>
+        <p className="mt-2 text-gray-600">
+          Ready for your next journey? Let's find the perfect bus for you.
+        </p>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -130,51 +117,24 @@ const CustomerDashboard = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* Quick Actions */}
-          <div className="lg:col-span-2">
+          <div>
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-6">Quick Actions</h2>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-4">
                 <Link
                   to="/customer/search"
-                  className="group p-6 border border-gray-200 rounded-lg hover:border-primary-300 hover:shadow-md transition-all"
+                  className="group flex items-center p-4 border border-gray-200 rounded-lg hover:border-primary-300 hover:shadow-md transition-all"
                 >
-                  <div className="flex items-center mb-4">
-                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
-                      <Search className="h-6 w-6 text-blue-600" />
-                    </div>
-                    <div className="ml-4">
-                      <h3 className="text-lg font-semibold text-gray-900">Search & Book</h3>
-                      <p className="text-sm text-gray-600">Find available schedules</p>
-                    </div>
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                    <Search className="h-5 w-5 text-blue-600" />
                   </div>
-                  <div className="flex items-center text-primary-600 font-medium">
-                    Start booking
-                    <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                  <div className="ml-4 flex-1">
+                    <h3 className="text-lg font-semibold text-gray-900">Search & Book Tickets</h3>
+                    <p className="text-sm text-gray-600">Find available schedules and book your journey</p>
                   </div>
-                </Link>
-
-                <Link
-                  to="/customer/bookings"
-                  className="group p-6 border border-gray-200 rounded-lg hover:border-primary-300 hover:shadow-md transition-all"
-                >
-                  <div className="flex items-center mb-4">
-                    <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition-colors">
-                      <Calendar className="h-6 w-6 text-green-600" />
-                    </div>
-                    <div className="ml-4">
-                      <h3 className="text-lg font-semibold text-gray-900">My Bookings</h3>
-                      <p className="text-sm text-gray-600">Manage your tickets</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center text-primary-600 font-medium">
-                    View bookings
-                    <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                  </div>
-                </Link>
-              </div>
             </div>
           </div>
 
@@ -238,7 +198,7 @@ const CustomerDashboard = () => {
         </div>
 
         {/* Popular Routes */}
-        <div className="mt-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-6">Popular Routes</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
@@ -246,7 +206,11 @@ const CustomerDashboard = () => {
               { from: 'Kigali', to: 'Musanze', price: '2,800 RWF', duration: '2h 15m' },
               { from: 'Butare', to: 'Nyanza', price: '1,200 RWF', duration: '45m' }
             ].map((route, index) => (
-              <div key={index} className="group p-4 border border-gray-200 rounded-lg hover:border-primary-300 hover:shadow-md transition-all cursor-pointer">
+              <Link
+                key={index}
+                to="/customer/search"
+                className="group p-4 border border-gray-200 rounded-lg hover:border-primary-300 hover:shadow-md transition-all cursor-pointer block"
+              >
                 <div className="flex items-center justify-between mb-2">
                   <div className="font-medium text-gray-900">
                     {route.from} → {route.to}
@@ -257,11 +221,10 @@ const CustomerDashboard = () => {
                   <span className="text-gray-500">{route.duration}</span>
                   <span className="font-semibold text-primary-600">{route.price}</span>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
-      </div>
     </div>
   )
 }
