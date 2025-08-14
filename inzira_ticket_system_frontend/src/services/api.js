@@ -46,6 +46,7 @@ export const authAPI = {
   login: (data) => api.post('/auth/login', data),
   register: (data) => api.post('/auth/register', data),
   getCurrentUser: () => api.get('/auth/me'),
+  changePassword: (data) => api.post('/auth/change-password', data),
 }
 
 // Shared APIs (accessible by multiple roles)
