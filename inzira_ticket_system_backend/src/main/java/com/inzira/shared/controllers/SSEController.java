@@ -13,7 +13,6 @@ import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequestMapping("/api/sse")
-@CrossOrigin(origins = "http://localhost:5173")
 public class SSEController {
 
     private final ConcurrentHashMap<String, SseEmitter> emitters = new ConcurrentHashMap<>();

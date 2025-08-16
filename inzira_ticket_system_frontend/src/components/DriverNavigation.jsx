@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Calendar, UserCheck, User, Home } from 'lucide-react'
+import { Calendar, UserCheck, User, Home,Key } from 'lucide-react'
 
 const DriverNavigation = () => {
   const location = useLocation()
@@ -10,6 +10,7 @@ const DriverNavigation = () => {
     { name: 'My Schedules', href: '/driver/schedules', icon: Calendar },
     { name: 'Verify Tickets', href: '/driver/verification', icon: UserCheck },
     { name: 'Profile', href: '/driver/profile', icon: User },
+    { name: 'Password', href: '/change-password', icon: Key },
   ]
 
   const isActive = (href) => {

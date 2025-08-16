@@ -135,6 +135,7 @@ const CustomerDashboard = () => {
                     <h3 className="text-lg font-semibold text-gray-900">Search & Book Tickets</h3>
                     <p className="text-sm text-gray-600">Find available schedules and book your journey</p>
                   </div>
+                </Link>
             </div>
           </div>
 
@@ -200,7 +201,7 @@ const CustomerDashboard = () => {
         {/* Popular Routes */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-6">Popular Routes</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[
               { from: 'Kigali', to: 'Butare', price: '3,500 RWF', duration: '2h 30m' },
               { from: 'Kigali', to: 'Musanze', price: '2,800 RWF', duration: '2h 15m' },
@@ -223,6 +224,7 @@ const CustomerDashboard = () => {
                 </div>
               </Link>
             ))}
+          </div>
           </div>
         </div>
     </div>

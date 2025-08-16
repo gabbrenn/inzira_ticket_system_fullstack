@@ -37,6 +37,7 @@ import CustomerDashboard from './pages/customer/CustomerDashboard'
 import BookingManagement from './pages/customer/BookingManagement'
 import SearchSchedules from './pages/customer/SearchSchedules'
 import GuestBooking from './pages/customer/GuestBooking'
+import CustomerProfile from './pages/customer/CustomerProfile'
 
 // Branch Manager pages
 import BranchManagerDashboard from './pages/branch_manager/BranchManagerDashboard'
@@ -289,6 +290,13 @@ function App() {
                 <ProtectedRoute requiredRole="CUSTOMER">
                   <DashboardLayout>
                     <BookingManagement />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/customer/profile" element={
+                <ProtectedRoute requiredRole="CUSTOMER">
+                  <DashboardLayout>
+                    <CustomerProfile />
                   </DashboardLayout>
                 </ProtectedRoute>
               } />

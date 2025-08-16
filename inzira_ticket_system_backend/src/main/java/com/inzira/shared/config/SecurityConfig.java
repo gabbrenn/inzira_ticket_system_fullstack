@@ -42,6 +42,8 @@ public class SecurityConfig {
                 .requestMatchers("/uploads/**").permitAll()
                 .requestMatchers("/api/tickets/verify/**").permitAll()
                 .requestMatchers("/api/tickets/download/**").permitAll()
+                .requestMatchers("/api/momo/**").permitAll()
+                .requestMatchers("/api/payments/**").permitAll()
                 .requestMatchers("/error").permitAll()
                 
                 // Shared endpoints that multiple roles can access - MUST come before /api/admin/**
