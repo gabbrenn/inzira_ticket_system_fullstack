@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Search, Calendar, User, ArrowLeft, Home } from 'lucide-react'
+import { Search, Calendar, User, ArrowLeft, Home, Key } from 'lucide-react'
 
 const CustomerNavigation = () => {
   const location = useLocation()
@@ -9,6 +9,8 @@ const CustomerNavigation = () => {
     { name: 'Dashboard', href: '/customer', icon: Home },
     { name: 'Search Schedules', href: '/customer/search', icon: Search },
     { name: 'My Bookings', href: '/customer/bookings', icon: Calendar },
+    { name: 'My Profile', href: '/customer/profile', icon: User },
+  
   ]
 
   const isActive = (href) => {

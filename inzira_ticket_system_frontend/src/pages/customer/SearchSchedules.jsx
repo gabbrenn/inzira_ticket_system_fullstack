@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react'
-import { Search, MapPin, Calendar, Clock, Users, ArrowRight } from 'lucide-react'
+import { Search, MapPin, Calendar, Clock, Users, ArrowRight, CreditCard, Smartphone, Building } from 'lucide-react'
 import { customerAPI } from '../../services/api'
 import { useAuth } from '../../contexts/AuthContext'
 import { useWebSocket } from '../../components/WebSocketProvider'
+import PaymentForm from '../../components/PaymentForm'
+import PaymentStatus from '../../components/PaymentStatus'
 import toast from 'react-hot-toast'
 
 const SearchSchedules = () => {
@@ -16,7 +18,10 @@ const SearchSchedules = () => {
   const [loading, setLoading] = useState(false)
   const [searching, setSearching] = useState(false)
   const [showBookingModal, setShowBookingModal] = useState(false)
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [selectedSchedule, setSelectedSchedule] = useState(null)
+  const [currentBooking, setCurrentBooking] = useState(null)
+  const [paymentStatus, setPaymentStatus] = useState(null)
   const { user } = useAuth()
 
   const [searchForm, setSearchForm] = useState({
@@ -165,15 +170,14 @@ const SearchSchedules = () => {
       }
 
       const response = await customerAPI.createBooking(bookingData)
-      toast.success('Booking created successfully!')
-      setShowBookingModal(false)
-      
-      // Refresh schedules to update available seats
-      handleSearch({ preventDefault: () => {} })
-      
-      // Show booking details
       const booking = response.data.data
-      toast.success(`Booking Reference: ${booking.bookingReference}`)
+      
+      // Store the booking and show payment modal
+      setCurrentBooking(booking)
+      setShowBookingModal(false)
+      setShowPaymentModal(true)
+      
+      toast.success(`Booking created successfully! Reference: ${booking.bookingReference}`)
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to create booking')
     }
@@ -185,6 +189,28 @@ const SearchSchedules = () => {
 
   const getDestinationDistrict = (destinationId) => {
     return districts.find(d => d.id.toString() === destinationId)?.name || ''
+  }
+
+  const handlePaymentSuccess = (paymentResponse) => {
+    setPaymentStatus(paymentResponse)
+    setShowPaymentModal(false)
+    toast.success('Payment completed successfully!')
+    
+    // Refresh schedules to update available seats
+    handleSearch({ preventDefault: () => {} })
+  }
+
+  const handlePaymentCancel = () => {
+    setShowPaymentModal(false)
+    setCurrentBooking(null)
+    toast.info('Payment cancelled. You can try again later.')
+  }
+
+  const handlePaymentStatusChange = (status) => {
+    setPaymentStatus(status)
+    if (status.isSuccessful) {
+      toast.success('Payment confirmed! Your ticket is ready.')
+    }
   }
 
   const originPoints = selectedSchedule ? routePoints[selectedSchedule.agencyRoute.route.origin.id] || [] : []
@@ -531,6 +557,43 @@ const SearchSchedules = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Payment Modal */}
+      {showPaymentModal && currentBooking && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Complete Your Payment</h3>
+              <button
+                onClick={() => setShowPaymentModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Payment Form */}
+              <div>
+                <PaymentForm 
+                  booking={currentBooking}
+                  onPaymentSuccess={handlePaymentSuccess}
+                  onPaymentCancel={handlePaymentCancel}
+                  allowCash={false}
+                />
+              </div>
+
+              {/* Payment Status */}
+              <div>
+                <PaymentStatus 
+                  transactionReference={paymentStatus?.transactionReference}
+                  onStatusChange={handlePaymentStatusChange}
+                />
+              </div>
+            </div>
           </div>
         </div>
       )}
