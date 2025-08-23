@@ -25,7 +25,7 @@ public class Payment {
     private BigDecimal amount;
 
     @Column(nullable = false)
-    private String paymentMethod; // MOBILE_MONEY, BANK_CARD, CASH, STRIPE, BANK_TRANSFER
+    private String paymentMethod; // STRIPE, CASH
 
     @Column(nullable = false)
     private String status; // PENDING, SUCCESS, FAILED, REFUNDED, CANCELLED
@@ -46,16 +46,13 @@ public class Payment {
     private String description; // Payment description
 
     @Column(length = 100)
-    private String phoneNumber; // For mobile money payments
-
-    @Column(length = 100)
     private String email; // Customer email
 
     @Column(length = 100)
     private String customerName; // Customer name
 
     @Column(length = 100)
-    private String paymentProvider; // MOMO, STRIPE, BANK, etc.
+    private String paymentProvider; // STRIPE, CASH
 
     @Column(length = 1000)
     private String failureReason; // Reason for payment failure

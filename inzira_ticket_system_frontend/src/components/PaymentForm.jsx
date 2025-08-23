@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import api from '../services/api';
 
 const PaymentForm = ({ booking, onPaymentSuccess, onPaymentCancel, allowCash = false }) => {
-    const [paymentMethod, setPaymentMethod] = useState('MOBILE_MONEY');
-    const [phoneNumber, setPhoneNumber] = useState('');
+    const [paymentMethod, setPaymentMethod] = useState('STRIPE');
     const [email, setEmail] = useState('');
     const [customerName, setCustomerName] = useState('');
     const [loading, setLoading] = useState(false);
@@ -20,7 +19,7 @@ const PaymentForm = ({ booking, onPaymentSuccess, onPaymentCancel, allowCash = f
         
         // Set default payment method based on what's allowed
         if (!allowCash && paymentMethod === 'CASH') {
-            setPaymentMethod('MOBILE_MONEY');
+            setPaymentMethod('STRIPE');
         }
     }, [booking, allowCash, paymentMethod]);
 
@@ -37,12 +36,11 @@ const PaymentForm = ({ booking, onPaymentSuccess, onPaymentCancel, allowCash = f
                 paymentMethod: paymentMethod,
                 currency: 'RWF',
                 description: `Bus ticket from ${booking.pickupPoint?.district?.name} to ${booking.dropPoint?.district?.name}`,
-                phoneNumber: paymentMethod === 'MOBILE_MONEY' ? phoneNumber : null,
-                email: ['STRIPE', 'BANK_CARD'].includes(paymentMethod) ? email : null,
+                email: paymentMethod === 'STRIPE' ? email : null,
                 customerName: customerName || null
             };
 
-            const response = await axios.post('/api/payments/initiate', paymentData);
+            const response = await api.post('/payments/initiate', paymentData);
             
             if (response.data.status === 'ERROR') {
                 toast.error(response.data.message || 'Payment initiation failed');
@@ -73,12 +71,7 @@ const PaymentForm = ({ booking, onPaymentSuccess, onPaymentCancel, allowCash = f
     };
 
     const validateForm = () => {
-        if (paymentMethod === 'MOBILE_MONEY' && (!phoneNumber || phoneNumber.trim() === '')) {
-            toast.error('Phone number is required for mobile money payment');
-            return false;
-        }
-
-        if (['STRIPE', 'BANK_CARD'].includes(paymentMethod) && (!email || email.trim() === '')) {
+        if (paymentMethod === 'STRIPE' && (!email || email.trim() === '')) {
             toast.error('Email is required for card payment');
             return false;
         }
@@ -104,30 +97,7 @@ const PaymentForm = ({ booking, onPaymentSuccess, onPaymentCancel, allowCash = f
 
     const renderPaymentMethodFields = () => {
         switch (paymentMethod) {
-            case 'MOBILE_MONEY':
-                return (
-                    <div className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Phone Number *
-                            </label>
-                            <input
-                                type="tel"
-                                value={phoneNumber}
-                                onChange={(e) => setPhoneNumber(e.target.value)}
-                                placeholder="07X XXX XXXX"
-                                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                required
-                            />
-                            <p className="text-sm text-gray-500 mt-1">
-                                Enter your mobile money phone number
-                            </p>
-                        </div>
-                    </div>
-                );
-
             case 'STRIPE':
-            case 'BANK_CARD':
                 return (
                     <div className="space-y-4">
                         <div>
@@ -142,16 +112,10 @@ const PaymentForm = ({ booking, onPaymentSuccess, onPaymentCancel, allowCash = f
                                 className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 required
                             />
+                            <p className="text-sm text-gray-500 mt-1">
+                                We'll send payment confirmation to this email
+                            </p>
                         </div>
-                    </div>
-                );
-
-            case 'BANK_TRANSFER':
-                return (
-                    <div className="bg-blue-50 p-4 rounded-md">
-                        <p className="text-sm text-blue-800">
-                            Bank transfer instructions will be provided after payment initiation.
-                        </p>
                     </div>
                 );
 
@@ -212,9 +176,7 @@ const PaymentForm = ({ booking, onPaymentSuccess, onPaymentCancel, allowCash = f
                     </label>
                     <div className="grid grid-cols-2 gap-3">
                         {[
-                            { value: 'MOBILE_MONEY', label: 'Mobile Money', icon: '📱' },
-                            { value: 'BANK_CARD', label: 'Bank Card', icon: '💳' },
-                            { value: 'BANK_TRANSFER', label: 'Bank Transfer', icon: '🏦' },
+                            { value: 'STRIPE', label: 'Credit/Debit Card', icon: '💳' },
                             ...(allowCash ? [{ value: 'CASH', label: 'Cash', icon: '💰' }] : [])
                         ].map((method) => (
                             <button

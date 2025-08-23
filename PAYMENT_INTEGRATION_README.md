@@ -1,22 +1,22 @@
 # Payment Integration System - Inzira Ticket System
 
-This document provides a comprehensive guide to the payment integration system implemented in the Inzira Ticket System.
+This document provides a comprehensive guide to the simplified payment integration system implemented in the Inzira Ticket System.
 
 ## 🚀 Overview
 
-The payment system supports multiple payment methods including:
-- **Mobile Money** (MoMo, Airtel Money) - Primary for Rwanda
-- **Bank Cards** (Visa, Mastercard) via Stripe
-- **Bank Transfers** (Manual processing)
-- **Cash Payments** (Immediate confirmation)
+The payment system currently supports two payment methods:
+- **Credit/Debit Cards** via Stripe - For online customer bookings
+- **Cash Payments** - For agent bookings only (immediate confirmation)
+
+*Note: Additional payment methods (Mobile Money, Bank Transfer) can be added later as needed.*
 
 ## 🏗️ Architecture
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   React Frontend │    │  Spring Boot    │    │  Payment       │
-│   PaymentForm   │◄──►│   Payment       │◄──►│  Providers     │
-│   PaymentStatus │    │   Service       │    │  (MoMo,Stripe) │
+│   PaymentForm   │◄──►│   Payment       │◄──►│  Provider      │
+│   PaymentStatus │    │   Service       │    │  (Stripe)      │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
@@ -26,7 +26,7 @@ The payment system supports multiple payment methods including:
 ```
 src/main/java/com/inzira/shared/
 ├── entities/
-│   └── Payment.java                    # Payment entity with all fields
+│   └── Payment.java                    # Payment entity with essential fields
 ├── dtos/
 │   ├── PaymentRequest.java             # Payment request DTO
 │   ├── PaymentResponse.java            # Payment response DTO
@@ -34,9 +34,7 @@ src/main/java/com/inzira/shared/
 ├── services/
 │   ├── PaymentService.java             # Main payment service interface
 │   ├── PaymentServiceImpl.java         # Main payment service implementation
-│   ├── MoMoPaymentService.java         # Mobile money service
-│   ├── StripePaymentService.java       # Stripe card payment service
-│   └── BankPaymentService.java         # Bank transfer service
+│   └── StripePaymentService.java       # Stripe card payment service
 ├── controllers/
 │   └── PaymentController.java          # Payment REST endpoints
 └── repositories/
@@ -54,23 +52,13 @@ src/components/
 
 ### Application Properties
 ```properties
-# MoMo Configuration (Mobile Money)
-momo.api.key=your_momo_api_key_here
-momo.api.secret=your_momo_api_secret_here
-momo.merchant.id=your_merchant_id_here
-momo.callback.url=https://yourdomain.com/api/payments/callback/momo
-momo.api.url=https://sandbox.momodeveloper.mtn.com
-
 # Stripe Configuration (Card Payments)
 stripe.secret.key=your_stripe_secret_key_here
 stripe.publishable.key=your_stripe_publishable_key_here
 stripe.webhook.secret=your_webhook_secret_here
 
-# Bank Configuration (Bank Transfers)
-bank.api.url=https://bank-api.example.com
-bank.api.key=your_bank_api_key_here
-bank.account.number=1234567890
-bank.account.name=Inzira Ticket System
+# Cash payments are processed immediately for agent bookings
+# No additional configuration needed for cash payments
 ```
 
 ## 🚀 Getting Started
@@ -85,11 +73,10 @@ bank.account.name=Inzira Ticket System
    </dependency>
    ```
 
-2. **Configure Payment Providers**:
-   - Update `application.properties` with your API keys
-   - For MoMo: Get credentials from MTN MoMo Developer Portal
-   - For Stripe: Get credentials from Stripe Dashboard
-   - For Bank: Configure with your bank's API
+2. **Configure Stripe**:
+   - Update `application.properties` with your Stripe API keys
+   - Get credentials from Stripe Dashboard
+   - Configure webhook endpoint for payment status updates
 
 3. **Database Migration**:
    The Payment entity includes all necessary fields. Run your application to create the table.

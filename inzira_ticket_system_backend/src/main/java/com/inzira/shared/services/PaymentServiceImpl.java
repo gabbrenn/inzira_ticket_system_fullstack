@@ -30,13 +30,7 @@ public class PaymentServiceImpl implements PaymentService {
     private BookingRepository bookingRepository;
     
     @Autowired
-    private MoMoPaymentService moMoPaymentService;
-    
-    @Autowired
     private StripePaymentService stripePaymentService;
-    
-    @Autowired
-    private BankPaymentService bankPaymentService;
 
     @Override
     @Transactional
@@ -204,7 +198,6 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setTransactionReference(transactionReference);
         payment.setCurrency(request.getCurrency());
         payment.setDescription(request.getDescription());
-        payment.setPhoneNumber(request.getPhoneNumber());
         payment.setEmail(request.getEmail());
         payment.setCustomerName(request.getCustomerName());
         payment.setPaymentProvider(determinePaymentProvider(request.getPaymentMethod()));
@@ -215,14 +208,8 @@ public class PaymentServiceImpl implements PaymentService {
     
     private String determinePaymentProvider(String paymentMethod) {
         switch (paymentMethod) {
-            case "MOBILE_MONEY":
-                return "MOMO";
             case "STRIPE":
                 return "STRIPE";
-            case "BANK_TRANSFER":
-                return "BANK";
-            case "BANK_CARD":
-                return "CARD";
             case "CASH":
                 return "CASH";
             default:
@@ -233,16 +220,10 @@ public class PaymentServiceImpl implements PaymentService {
     private PaymentResponse processPaymentByMethod(PaymentRequest request, Payment payment) {
         try {
             switch (request.getPaymentMethod()) {
-                case "MOBILE_MONEY":
-                    return moMoPaymentService.processPayment(request, payment);
                 case "STRIPE":
                     return stripePaymentService.processPayment(request, payment);
-                case "BANK_TRANSFER":
-                    return bankPaymentService.processPayment(request, payment);
                 case "CASH":
                     return processCashPayment(request, payment);
-                case "BANK_CARD":
-                    return stripePaymentService.processPayment(request, payment);
                 default:
                     return PaymentResponse.error("Unsupported payment method");
             }
@@ -270,12 +251,8 @@ public class PaymentServiceImpl implements PaymentService {
     private boolean processCallbackByMethod(Payment payment, String callbackData) {
         try {
             switch (payment.getPaymentMethod()) {
-                case "MOBILE_MONEY":
-                    return moMoPaymentService.processCallback(payment, callbackData);
                 case "STRIPE":
                     return stripePaymentService.processCallback(payment, callbackData);
-                case "BANK_TRANSFER":
-                    return bankPaymentService.processCallback(payment, callbackData);
                 default:
                     log.warn("Unknown payment method for callback: {}", payment.getPaymentMethod());
                     return false;
@@ -291,8 +268,6 @@ public class PaymentServiceImpl implements PaymentService {
             switch (payment.getPaymentMethod()) {
                 case "STRIPE":
                     return stripePaymentService.processRefund(payment, amount);
-                case "BANK_TRANSFER":
-                    return bankPaymentService.processRefund(payment, amount);
                 default:
                     log.warn("Refund not supported for payment method: {}", payment.getPaymentMethod());
                     return false;

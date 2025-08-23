@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import api from '../services/api';
 
 const PaymentStatus = ({ transactionReference, onStatusChange }) => {
     const [status, setStatus] = useState(null);
@@ -20,7 +20,7 @@ const PaymentStatus = ({ transactionReference, onStatusChange }) => {
         setError(null);
 
         try {
-            const response = await axios.get(`/api/payments/status/${transactionReference}`);
+            const response = await api.get(`/payments/status/${transactionReference}`);
             setStatus(response.data);
             
             if (onStatusChange) {

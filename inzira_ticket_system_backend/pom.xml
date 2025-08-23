@@ -146,6 +146,15 @@
 			<artifactId>spring-boot-starter-validation</artifactId>
 		</dependency>
 
+		<!-- Stripe -->
+		<dependency>
+			<groupId>com.stripe</groupId>
+			<artifactId>stripe-java</artifactId>
+			<version>29.4.0</version>
+		</dependency>
+
+		<!-- MoMo -->
+
 	</dependencies>
 
 	<build>

@@ -39,6 +39,7 @@ public class SecurityConfig {
                 // Public endpoints - allow all
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/guest/**").permitAll()
+                .requestMatchers("/api/sse/**").permitAll()
                 .requestMatchers("/uploads/**").permitAll()
                 .requestMatchers("/api/tickets/verify/**").permitAll()
                 .requestMatchers("/api/tickets/download/**").permitAll()

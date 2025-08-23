@@ -97,7 +97,7 @@ public class GuestBookingService {
         );
         String qrCode = qrCodeService.generateQRCode(qrData);
 
-        // Create booking
+        // Create booking with pending status - requires payment completion
         Booking booking = new Booking();
         booking.setCustomer(customer);
         booking.setSchedule(schedule);
@@ -106,23 +106,16 @@ public class GuestBookingService {
         booking.setBookingReference(bookingReference);
         booking.setTotalAmount(totalAmount);
         booking.setNumberOfSeats(request.getNumberOfSeats());
-        booking.setStatus("CONFIRMED"); // Guest bookings are automatically confirmed
-        booking.setPaymentStatus("PAID"); // Assume payment is handled
+        booking.setStatus("PENDING"); // Guest bookings now require payment completion
+        booking.setPaymentStatus("PENDING"); // Payment status is pending until payment is completed
         booking.setQrCode(qrCode);
         booking.setCreatedBy("GUEST");
 
         // Save booking first
         Booking savedBooking = bookingRepository.save(booking);
 
-        // Generate PDF ticket
-        try {
-            String pdfPath = pdfTicketService.generateTicketPDF(savedBooking);
-            savedBooking.setTicketPdfPath(pdfPath);
-            savedBooking = bookingRepository.save(savedBooking);
-        } catch (Exception e) {
-            // PDF generation failed, but booking is still valid
-            System.err.println("Failed to generate PDF ticket: " + e.getMessage());
-        }
+        // Note: PDF ticket will be generated after payment completion
+        // This is handled by the payment service when payment is successful
 
         // Update available seats
         schedule.setAvailableSeats(schedule.getAvailableSeats() - request.getNumberOfSeats());

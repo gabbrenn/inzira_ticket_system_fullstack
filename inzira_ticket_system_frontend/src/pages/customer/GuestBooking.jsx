@@ -4,7 +4,8 @@ import { customerAPI } from '../../services/api'
 import { useAuth } from '../../contexts/AuthContext'
 import { Navigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-
+import PaymentForm from '../../components/PaymentForm'
+import PaymentStatus from '../../components/PaymentStatus'
 
 const GuestBooking = () => {
   const { isAuthenticated } = useAuth()
@@ -23,7 +24,10 @@ const GuestBooking = () => {
   const [loading, setLoading] = useState(false)
   const [searching, setSearching] = useState(false)
   const [showBookingModal, setShowBookingModal] = useState(false)
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [selectedSchedule, setSelectedSchedule] = useState(null)
+  const [currentBooking, setCurrentBooking] = useState(null)
+  const [paymentStatus, setPaymentStatus] = useState(null)
   const [bookingComplete, setBookingComplete] = useState(false)
   const [completedBooking, setCompletedBooking] = useState(null)
 
@@ -171,11 +175,12 @@ const GuestBooking = () => {
       const response = await customerAPI.createGuestBooking(bookingData)
       const booking = response.data.data
       
-      setCompletedBooking(booking)
-      setBookingComplete(true)
+      // Store the booking and show payment modal
+      setCurrentBooking(booking)
       setShowBookingModal(false)
+      setShowPaymentModal(true)
       
-      toast.success('Booking created successfully!')
+      toast.success(`Booking created successfully! Reference: ${booking.bookingReference}`)
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to create booking')
     }
@@ -205,6 +210,25 @@ const GuestBooking = () => {
       toast.error('Failed to download ticket')
     }
   }
+
+  const handlePaymentSuccess = (status) => {
+    setPaymentStatus(status);
+    setBookingComplete(true);
+    setCompletedBooking(currentBooking);
+    setShowPaymentModal(false);
+    setCurrentBooking(null);
+    setPaymentStatus(null);
+  };
+
+  const handlePaymentCancel = () => {
+    setShowPaymentModal(false);
+    setCurrentBooking(null);
+    setPaymentStatus(null);
+  };
+
+  const handlePaymentStatusChange = (status) => {
+    setPaymentStatus(status);
+  };
 
   const originPoints = selectedSchedule ? routePoints[selectedSchedule.agencyRoute.route.origin.id] || [] : []
   const destinationPoints = selectedSchedule ? routePoints[selectedSchedule.agencyRoute.route.destination.id] || [] : []
@@ -624,6 +648,48 @@ const GuestBooking = () => {
           </div>
         </div>
       )}
+
+      {/* Payment Modal */}
+      {showPaymentModal && currentBooking && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Complete Your Payment</h3>
+              <button
+                onClick={() => {
+                  setShowPaymentModal(false);
+                  setCurrentBooking(null);
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Payment Form */}
+              <div>
+                <PaymentForm 
+                  booking={currentBooking}
+                  onPaymentSuccess={handlePaymentSuccess}
+                  onPaymentCancel={handlePaymentCancel}
+                  allowCash={false}
+                />
+              </div>
+
+              {/* Payment Status */}
+              <div>
+                <PaymentStatus 
+                  transactionReference={paymentStatus?.transactionReference}
+                  onStatusChange={handlePaymentStatusChange}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+
     </div>
   )
 }

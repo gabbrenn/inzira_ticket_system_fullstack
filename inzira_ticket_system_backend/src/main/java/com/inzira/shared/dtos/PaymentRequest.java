@@ -19,8 +19,8 @@ public class PaymentRequest {
     private BigDecimal amount;
     
     @NotBlank(message = "Payment method is required")
-    @Pattern(regexp = "^(MOBILE_MONEY|BANK_CARD|CASH|STRIPE|BANK_TRANSFER)$", 
-             message = "Invalid payment method")
+    @Pattern(regexp = "^(STRIPE|CASH)$", 
+             message = "Invalid payment method. Only STRIPE and CASH are supported")
     private String paymentMethod;
     
     @NotBlank(message = "Currency is required")
@@ -29,10 +29,6 @@ public class PaymentRequest {
     
     @NotBlank(message = "Description is required")
     private String description;
-    
-    // For mobile money payments
-    @Pattern(regexp = "^07[0-9]{8}$", message = "Invalid phone number format")
-    private String phoneNumber;
     
     // For card payments
     private String email;
