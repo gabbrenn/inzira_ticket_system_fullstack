@@ -282,13 +282,23 @@ const BookingManagement = () => {
                     <div className="flex space-x-2">
                       {booking.status === 'PENDING' && (
                         <>
-                          <button
-                            onClick={() => handleConfirmBooking(booking.id)}
-                            className="btn-secondary text-sm py-2 px-3"
-                          >
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                            Confirm
-                          </button>
+                          {booking.paymentStatus !== 'PAID' ? (
+                            <a
+                              href={`/customer/pay?bookingId=${booking.id}`}
+                              className="btn-primary text-sm py-2 px-3"
+                            >
+                              <CreditCard className="h-3 w-3 mr-1 inline" />
+                              Pay Now
+                            </a>
+                          ) : (
+                            <button
+                              onClick={() => handleConfirmBooking(booking.id)}
+                              className="btn-secondary text-sm py-2 px-3"
+                            >
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              Confirm
+                            </button>
+                          )}
                           <button
                             onClick={() => handleCancelBooking(booking.id)}
                             className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-md text-sm"

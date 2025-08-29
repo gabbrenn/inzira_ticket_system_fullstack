@@ -79,7 +79,12 @@ public class ScheduleController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteSchedule(@PathVariable Long id) {
-        scheduleService.deleteSchedule(id);
-        return ResponseEntity.ok(new ApiResponse<>(true, "Schedule deleted successfully"));
+        try {
+            scheduleService.deleteSchedule(id);
+            return ResponseEntity.ok(new ApiResponse<>(true, "Schedule deleted successfully"));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ApiResponse<>(false, e.getMessage()));
+        }
     }
 }

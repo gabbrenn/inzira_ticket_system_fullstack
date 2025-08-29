@@ -30,6 +30,15 @@ public class StripePaymentService {
     @Value("${stripe.webhook.secret:}")
     private String webhookSecret;
 
+    @Value("${app.frontend.base-url:http://localhost:5173}")
+    private String frontendBaseUrl;
+
+    @Value("${stripe.success.url:}")
+    private String configuredSuccessUrl;
+
+    @Value("${stripe.cancel.url:}")
+    private String configuredCancelUrl;
+
     @PostConstruct
     public void init() {
         Stripe.apiKey = secretKey;
@@ -42,29 +51,98 @@ public class StripePaymentService {
         try {
             log.info("Creating Stripe Checkout Session for reference: {}", payment.getTransactionReference());
 
-            // Stripe expects amounts in the smallest currency unit
-            // RWF has no decimals, so we pass the raw value (no *100)
-            long amountInSmallestUnit = request.getAmount().longValue();
+            // Derive booking/ticket details for meaningful display on Stripe
+            var booking = payment.getBooking();
+            String origin = booking.getSchedule().getAgencyRoute().getRoute().getOrigin().getName();
+            String destination = booking.getSchedule().getAgencyRoute().getRoute().getDestination().getName();
+            String routeName = origin + " → " + destination;
+            String travelDate = String.valueOf(booking.getSchedule().getDepartureDate());
+            String travelTime = String.valueOf(booking.getSchedule().getDepartureTime());
+            String pickup = booking.getPickupPoint() != null ? booking.getPickupPoint().getName() : "-";
+            String drop = booking.getDropPoint() != null ? booking.getDropPoint().getName() : "-";
+            int seats = booking.getNumberOfSeats() != null ? booking.getNumberOfSeats() : 1;
 
-            SessionCreateParams params = SessionCreateParams.builder()
+            String customerEmail = request.getEmail() != null && !request.getEmail().isBlank()
+                ? request.getEmail()
+                : (booking.getCustomer() != null ? booking.getCustomer().getEmail() : null);
+
+            // Stripe expects amounts in the smallest currency unit
+            boolean zeroDecimal = isZeroDecimalCurrency(request.getCurrency());
+            long amountInSmallestUnit = zeroDecimal
+                ? request.getAmount().setScale(0, java.math.RoundingMode.HALF_UP).longValue()
+                : request.getAmount().multiply(new BigDecimal(100)).setScale(0, java.math.RoundingMode.HALF_UP).longValue();
+
+            // Use per-seat pricing when divisible, otherwise charge as a single line
+            long quantity = Math.max(1, seats);
+            long unitAmount = amountInSmallestUnit;
+            if (quantity > 1 && amountInSmallestUnit % quantity == 0) {
+                unitAmount = amountInSmallestUnit / quantity;
+            } else {
+                quantity = 1;
+            }
+
+            // Professional success/cancel URLs
+            String successUrl = (configuredSuccessUrl != null && !configuredSuccessUrl.isBlank())
+                ? configuredSuccessUrl
+                : frontendBaseUrl + "/payment/success?session_id={CHECKOUT_SESSION_ID}&ref=" + payment.getTransactionReference();
+            String cancelUrl = (configuredCancelUrl != null && !configuredCancelUrl.isBlank())
+                ? configuredCancelUrl
+                : frontendBaseUrl + "/payment/cancel?ref=" + payment.getTransactionReference();
+
+            String lineItemName = "Bus Ticket: " + routeName;
+            String lineItemDescription = "Travel " + travelDate + " " + travelTime
+                + " • Seats: " + seats
+                + " • Pickup: " + pickup
+                + " • Drop: " + drop
+                + " • Ref: " + booking.getBookingReference();
+
+            SessionCreateParams.Builder builder = SessionCreateParams.builder()
                 .setMode(SessionCreateParams.Mode.PAYMENT)
-                .setSuccessUrl("http://yourdomain.com/success?session_id={CHECKOUT_SESSION_ID}")
-                .setCancelUrl("https://yourdomain.com/cancel")
-                .setClientReferenceId(payment.getTransactionReference())
-                .addLineItem(
-                    SessionCreateParams.LineItem.builder()
-                        .setQuantity(1L)
-                        .setPriceData(
-                            SessionCreateParams.LineItem.PriceData.builder()
-                                .setCurrency(request.getCurrency().toLowerCase()) // e.g. rwf, usd
-                                .setUnitAmount(amountInSmallestUnit)
-                                .setProductData(
-                                    SessionCreateParams.LineItem.PriceData.ProductData.builder()
-                                        .setName("Payment for Order " + payment.getTransactionReference())
-                                        .build())
-                                .build())
-                        .build())
-                .build();
+                .setSuccessUrl(successUrl)
+                .setCancelUrl(cancelUrl)
+                .setClientReferenceId(payment.getTransactionReference());
+
+            if (customerEmail != null && !customerEmail.isBlank()) {
+                builder.setCustomerEmail(customerEmail);
+            }
+
+            SessionCreateParams.PaymentIntentData.Builder piBuilder = SessionCreateParams.PaymentIntentData.builder()
+                .setDescription((request.getDescription() != null && !request.getDescription().isBlank())
+                    ? request.getDescription()
+                    : ("Ticket " + routeName + " on " + travelDate))
+                .putMetadata("payment_reference", payment.getTransactionReference())
+                .putMetadata("booking_id", String.valueOf(booking.getId()))
+                .putMetadata("booking_reference", booking.getBookingReference())
+                .putMetadata("route", routeName)
+                .putMetadata("travel_date", travelDate)
+                .putMetadata("travel_time", travelTime)
+                .putMetadata("seats", String.valueOf(seats))
+                .putMetadata("pickup", pickup)
+                .putMetadata("drop", drop)
+                .putMetadata("currency", request.getCurrency());
+
+            if (customerEmail != null && !customerEmail.isBlank()) {
+                piBuilder.setReceiptEmail(customerEmail);
+            }
+
+            builder.setPaymentIntentData(piBuilder.build());
+
+            builder.addLineItem(
+                SessionCreateParams.LineItem.builder()
+                    .setQuantity(quantity)
+                    .setPriceData(
+                        SessionCreateParams.LineItem.PriceData.builder()
+                            .setCurrency(request.getCurrency().toLowerCase())
+                            .setUnitAmount(unitAmount)
+                            .setProductData(
+                                SessionCreateParams.LineItem.PriceData.ProductData.builder()
+                                    .setName(lineItemName)
+                                    .setDescription(lineItemDescription)
+                                    .build())
+                            .build())
+                    .build());
+
+            SessionCreateParams params = builder.build();
 
             Session session = Session.create(params);
 
@@ -83,13 +161,41 @@ public class StripePaymentService {
             response.setRequiresRedirect(true);
             response.setRedirectUrl(session.getUrl());
             response.setCreatedAt(LocalDateTime.now());
-            response.setInstructions("You will be redirected to Stripe to complete your payment securely.");
+            response.setInstructions("Complete your ticket payment securely on Stripe. You'll be redirected back after payment.");
 
             return response;
 
         } catch (StripeException e) {
             log.error("Error creating Stripe Checkout Session: {}", e.getMessage(), e);
             return PaymentResponse.error("Stripe payment failed: " + e.getMessage());
+        } catch (Exception e) {
+            log.error("Unexpected error creating Stripe session: {}", e.getMessage(), e);
+            return PaymentResponse.error("Stripe payment failed");
+        }
+    }
+
+    private boolean isZeroDecimalCurrency(String currency) {
+        if (currency == null) return false;
+        switch (currency.toUpperCase()) {
+            case "BIF":
+            case "CLP":
+            case "DJF":
+            case "GNF":
+            case "JPY":
+            case "KMF":
+            case "KRW":
+            case "MGA":
+            case "PYG":
+            case "RWF":
+            case "UGX":
+            case "VND":
+            case "VUV":
+            case "XAF":
+            case "XOF":
+            case "XPF":
+                return true;
+            default:
+                return false;
         }
     }
 

@@ -1,5 +1,5 @@
-import React from 'react'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import React, { useEffect, useState } from 'react'
+import { BrowserRouter as Router, Routes, Route, useSearchParams, Link } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from './contexts/AuthContext'
 import { WebSocketProvider } from './components/WebSocketProvider'
@@ -38,6 +38,7 @@ import BookingManagement from './pages/customer/BookingManagement'
 import SearchSchedules from './pages/customer/SearchSchedules'
 import GuestBooking from './pages/customer/GuestBooking'
 import CustomerProfile from './pages/customer/CustomerProfile'
+import Pay from './pages/customer/Pay'
 
 // Branch Manager pages
 import BranchManagerDashboard from './pages/branch_manager/BranchManagerDashboard'
@@ -56,6 +57,86 @@ import DriverDashboard from './pages/driver/DriverDashboard'
 import DriverSchedules from './pages/driver/DriverSchedules'
 import DriverTicketVerification from './pages/driver/DriverTicketVerification'
 import DriverProfile from './pages/driver/DriverProfile'
+import api from './services/api'
+
+// Payment success page
+const PaymentSuccess = () => {
+  const [searchParams] = useSearchParams()
+  const sessionId = searchParams.get('session_id')
+  const ref = searchParams.get('ref')
+  const [loading, setLoading] = useState(true)
+  const [status, setStatus] = useState(null)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    let isMounted = true
+    const confirmAndFetch = async () => {
+      try {
+        // Attempt server-side confirmation without webhook
+        if (sessionId && ref) {
+          await api.post(`/payments/confirm/stripe?session_id=${encodeURIComponent(sessionId)}&ref=${encodeURIComponent(ref)}`)
+        }
+        if (ref) {
+          const res = await api.get(`/payments/status/${ref}`)
+          if (isMounted) setStatus(res.data)
+        }
+      } catch (e) {
+        if (isMounted) setError('Failed to finalize payment. If you were charged, your ticket will appear once processed.')
+      } finally {
+        if (isMounted) setLoading(false)
+      }
+    }
+    confirmAndFetch()
+    return () => { isMounted = false }
+  }, [sessionId, ref])
+
+  return (
+    <div className="max-w-2xl mx-auto py-16">
+      <h1 className="text-2xl font-bold text-gray-900 mb-4">Payment Successful</h1>
+      <div className="bg-white rounded-lg shadow p-6">
+        <p className="text-gray-700 mb-2">Thank you. Your payment was processed by Stripe.</p>
+        <div className="text-sm text-gray-600 space-y-1 mb-4">
+          {ref && <p><strong>Reference:</strong> {ref}</p>}
+        </div>
+        {loading ? (
+          <p className="text-gray-600">Finalizing your payment...</p>
+        ) : error ? (
+          <p className="text-red-600">{error}</p>
+        ) : status ? (
+          <div className="space-y-2">
+            <p className="text-green-700"><strong>Status:</strong> {status.successful ? 'PAID' : status.status}</p>
+            <p><strong>Amount:</strong> {status.amount} {status.currency}</p>
+          </div>
+        ) : (
+          <p className="text-gray-600">Payment status verification not available.</p>
+        )}
+        <div className="mt-6 flex space-x-3">
+          <Link to="/" className="btn-primary px-4 py-2 rounded">Go Home</Link>
+          <Link to="/customer/bookings" className="btn-outline px-4 py-2 rounded">My Bookings</Link>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Payment cancel page
+const PaymentCancel = () => {
+  const [searchParams] = useSearchParams()
+  const ref = searchParams.get('ref')
+  return (
+    <div className="max-w-2xl mx-auto py-16">
+      <h1 className="text-2xl font-bold text-gray-900 mb-4">Payment Cancelled</h1>
+      <div className="bg-white rounded-lg shadow p-6">
+        <p className="text-gray-700 mb-2">Your payment was cancelled before completion.</p>
+        {ref && <p className="text-sm text-gray-600"><strong>Reference:</strong> {ref}</p>}
+        <div className="mt-6 flex space-x-3">
+          <Link to="/" className="btn-primary px-4 py-2 rounded">Go Home</Link>
+          <Link to="/customer/bookings" className="btn-outline px-4 py-2 rounded">My Bookings</Link>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function App() {
   return (
@@ -71,6 +152,8 @@ function App() {
               <Route path="/register/:role" element={<Register />} />
               <Route path="/guest-booking" element={<GuestBooking />} />
               <Route path="/unauthorized" element={<Unauthorized />} />
+              <Route path="/payment/success" element={<PaymentSuccess />} />
+              <Route path="/payment/cancel" element={<PaymentCancel />} />
               
               {/* Admin Routes */}
               <Route path="/admin" element={
@@ -290,6 +373,13 @@ function App() {
                 <ProtectedRoute requiredRole="CUSTOMER">
                   <DashboardLayout>
                     <BookingManagement />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/customer/pay" element={
+                <ProtectedRoute requiredRole="CUSTOMER">
+                  <DashboardLayout>
+                    <Pay />
                   </DashboardLayout>
                 </ProtectedRoute>
               } />

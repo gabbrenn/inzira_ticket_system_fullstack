@@ -157,8 +157,12 @@ public class BookingService {
             throw new IllegalArgumentException("Only pending bookings can be confirmed");
         }
 
+        // Only allow confirmation if payment status is PAID
+        if (!"PAID".equals(booking.getPaymentStatus())) {
+            throw new IllegalArgumentException("Cannot confirm booking before payment is completed");
+        }
+
         booking.setStatus("CONFIRMED");
-        booking.setPaymentStatus("PAID");
         return bookingRepository.save(booking);
     }
 

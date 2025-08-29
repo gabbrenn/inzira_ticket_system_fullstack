@@ -12,6 +12,7 @@ import com.inzira.shared.entities.Bus;
 import com.inzira.shared.entities.Driver;
 import com.inzira.shared.entities.Schedule;
 import com.inzira.shared.exceptions.ResourceNotFoundException;
+import com.inzira.shared.repositories.BookingRepository;
 import com.inzira.shared.repositories.BusRepository;
 import com.inzira.shared.repositories.DriverRepository;
 import com.inzira.shared.repositories.ScheduleRepository;
@@ -30,6 +31,9 @@ public class ScheduleService {
 
     @Autowired
     private DriverRepository driverRepository;
+
+    @Autowired
+    private BookingRepository bookingRepository;
 
     public Schedule createSchedule(Schedule schedule) {
         // Validate agency route exists
@@ -130,6 +134,12 @@ public class ScheduleService {
 
         if (!"SCHEDULED".equals(schedule.getStatus()) && !"CANCELLED".equals(schedule.getStatus())) {
             throw new IllegalArgumentException("Cannot delete schedule that has departed or arrived");
+        }
+
+        // Business rule: do not allow delete if bookings exist
+        long bookingCount = bookingRepository.countByScheduleId(id);
+        if (bookingCount > 0) {
+            throw new IllegalStateException("Cannot delete schedule because there are " + bookingCount + " booking(s) referencing it. Cancel the schedule instead.");
         }
 
         scheduleRepository.deleteById(id);
