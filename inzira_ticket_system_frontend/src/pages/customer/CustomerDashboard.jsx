@@ -74,7 +74,7 @@ const CustomerDashboard = () => {
 
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="bg-white rounded-lg shadow-sm border border-green-600 p-6">
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <CheckCircle className="h-8 w-8 text-green-600" />
@@ -88,7 +88,7 @@ const CustomerDashboard = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="bg-white rounded-lg shadow-sm border border-blue-600 p-6">
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <Calendar className="h-8 w-8 text-blue-600" />
@@ -102,7 +102,7 @@ const CustomerDashboard = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="bg-white rounded-lg shadow-sm border border-purple-600 p-6">
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <TrendingUp className="h-8 w-8 text-purple-600" />
@@ -140,7 +140,7 @@ const CustomerDashboard = () => {
           </div>
 
           {/* Recent Bookings */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-3">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-semibold text-gray-900">Recent Bookings</h2>
               <Link to="/customer/bookings" className="text-sm text-primary-600 hover:text-primary-800">

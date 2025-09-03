@@ -90,9 +90,20 @@ public class StripeCheckoutConfirmController {
             payment.setUpdatedAt(LocalDateTime.now());
             paymentRepository.save(payment);
 
-            // Update booking payment status
+            // Update booking payment status and auto-confirm + generate ticket
             var booking = payment.getBooking();
             booking.setPaymentStatus("PAID");
+            booking.setStatus("CONFIRMED");
+            try {
+                if (booking.getTicketPdfPath() == null || booking.getTicketPdfPath().isBlank()) {
+                    // Generate ticket PDF so guests can download immediately
+                    com.inzira.shared.services.PDFTicketService pdf = new com.inzira.shared.services.PDFTicketService();
+                    String pdfPath = pdf.generateTicketPDF(booking);
+                    booking.setTicketPdfPath(pdfPath);
+                }
+            } catch (Exception genEx) {
+                log.warn("Failed to generate PDF ticket on confirm: {}", genEx.getMessage());
+            }
             bookingRepository.save(booking);
 
             log.info("Stripe session confirmed without webhook. Ref: {}", reference);

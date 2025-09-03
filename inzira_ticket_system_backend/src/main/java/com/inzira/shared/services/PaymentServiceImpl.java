@@ -16,6 +16,7 @@ import com.inzira.shared.entities.Payment;
 import com.inzira.shared.exceptions.ResourceNotFoundException;
 import com.inzira.shared.repositories.BookingRepository;
 import com.inzira.shared.repositories.PaymentRepository;
+import com.inzira.shared.services.PDFTicketService;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -31,6 +32,9 @@ public class PaymentServiceImpl implements PaymentService {
     
     @Autowired
     private StripePaymentService stripePaymentService;
+
+    @Autowired
+    private PDFTicketService pdfTicketService;
 
     @Override
     @Transactional
@@ -113,9 +117,18 @@ public class PaymentServiceImpl implements PaymentService {
                 payment.setStatus("SUCCESS");
                 payment.setUpdatedAt(LocalDateTime.now());
                 
-                // Update booking payment status
+                // Update booking payment status and auto-confirm + generate ticket
                 Booking booking = payment.getBooking();
                 booking.setPaymentStatus("PAID");
+                booking.setStatus("CONFIRMED");
+                if (booking.getTicketPdfPath() == null || booking.getTicketPdfPath().isBlank()) {
+                    try {
+                        String pdfPath = pdfTicketService.generateTicketPDF(booking);
+                        booking.setTicketPdfPath(pdfPath);
+                    } catch (Exception ex) {
+                        log.warn("Failed to generate PDF ticket after payment: {}", ex.getMessage());
+                    }
+                }
                 bookingRepository.save(booking);
             }
             
@@ -239,9 +252,18 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setUpdatedAt(LocalDateTime.now());
         paymentRepository.save(payment);
         
-        // Update booking payment status
+        // Update booking payment status and auto-confirm + generate ticket
         Booking booking = payment.getBooking();
         booking.setPaymentStatus("PAID");
+        booking.setStatus("CONFIRMED");
+        if (booking.getTicketPdfPath() == null || booking.getTicketPdfPath().isBlank()) {
+            try {
+                String pdfPath = pdfTicketService.generateTicketPDF(booking);
+                booking.setTicketPdfPath(pdfPath);
+            } catch (Exception ex) {
+                log.warn("Failed to generate PDF ticket for cash payment: {}", ex.getMessage());
+            }
+        }
         bookingRepository.save(booking);
         
         return PaymentResponse.success(payment.getId(), payment.getTransactionReference(), 

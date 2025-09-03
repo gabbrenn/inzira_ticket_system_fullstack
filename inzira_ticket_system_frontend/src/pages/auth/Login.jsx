@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { Eye, EyeOff, LogIn, Bus } from 'lucide-react'
@@ -9,7 +9,7 @@ import toast from 'react-hot-toast'
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
-  const { login } = useAuth()
+  const { login, isAuthenticated, user } = useAuth()
   const navigate = useNavigate()
 
   const {
@@ -17,6 +17,31 @@ const Login = () => {
     handleSubmit,
     formState: { errors }
   } = useForm()
+
+  useEffect(() => {
+    // Prevent access to login page when already authenticated
+    if (isAuthenticated()) {
+      switch (user?.role) {
+        case 'ADMIN':
+          navigate('/admin', { replace: true });
+          break;
+        case 'AGENCY':
+          navigate('/agency', { replace: true });
+          break;
+        case 'BRANCH_MANAGER':
+          navigate('/branch-manager', { replace: true });
+          break;
+        case 'DRIVER':
+          navigate('/driver', { replace: true });
+          break;
+        case 'CUSTOMER':
+          navigate('/customer', { replace: true });
+          break;
+        default:
+          navigate('/', { replace: true });
+      }
+    }
+  }, [isAuthenticated, user, navigate])
 
   const onSubmit = async (data) => {
     try {
@@ -74,7 +99,7 @@ const Login = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <div className="flex justify-center">

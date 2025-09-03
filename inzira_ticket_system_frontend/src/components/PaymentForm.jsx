@@ -50,6 +50,16 @@ const PaymentForm = ({ booking, onPaymentSuccess, onPaymentCancel, allowCash = f
             setPaymentResponse(response.data);
             
             if (response.data.requiresRedirect && response.data.redirectUrl) {
+                // Persist minimal booking info so guest can retrieve ticket after redirect-back
+                try {
+                    localStorage.setItem('lastBooking', JSON.stringify({
+                        id: booking.id,
+                        bookingReference: booking.bookingReference,
+                        phoneNumber: booking.customer?.phoneNumber || null,
+                        email: booking.customer?.email || null,
+                        transactionReference: response.data.transactionReference || null
+                    }))
+                } catch (e) { /* ignore */ }
                 // Redirect to payment page
                 window.location.href = response.data.redirectUrl;
             } else if (response.data.status === 'SUCCESS') {

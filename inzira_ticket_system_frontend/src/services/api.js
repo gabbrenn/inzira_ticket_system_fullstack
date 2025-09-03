@@ -338,4 +338,25 @@ export const driverAPI = {
   getScheduleBookings: (scheduleId, driverId) => api.get(`/driver/verification/schedule/${scheduleId}/bookings?driverId=${driverId}`),
 }
 
+export const getFileUrl = (path) => {
+  if (!path) return ''
+  let p = String(path).trim()
+  // already absolute URL
+  if (/^https?:\/\//i.test(p)) return p
+  // normalize Windows-style backslashes to forward slashes
+  p = p.replace(/\\\\/g, '/').replace(/\\/g, '/').replace(/\\/g, '/')
+
+  // If a filesystem path contains uploads folder, extract public segment
+  const lower = p.toLowerCase()
+  const idx = lower.indexOf('uploads/')
+  if (idx !== -1) {
+    p = '/' + p.substring(idx)
+  }
+
+  // base API host without trailing /api
+  const base = API_BASE_URL.replace(/\/api\/?$/, '')
+  // absolute path on backend (e.g., /uploads/...) or relative (uploads/...)
+  return p.startsWith('/') ? `${base}${p}` : `${base}/${p}`
+}
+
 export default api

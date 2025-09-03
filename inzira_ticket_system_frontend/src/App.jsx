@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { BrowserRouter as Router, Routes, Route, useSearchParams, Link } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
+import toast from 'react-hot-toast'
 import { AuthProvider } from './contexts/AuthContext'
 import { WebSocketProvider } from './components/WebSocketProvider'
 import Layout from './components/Layout'
@@ -12,6 +13,7 @@ import Register from './pages/auth/Register'
 import ForgotPassword from './pages/auth/ForgotPassword'
 import ChangePassword from './pages/auth/ChangePassword'
 import Unauthorized from './pages/Unauthorized'
+import FindBooking from './pages/FindBooking'
 
 // Admin pages
 import AdminDashboard from './pages/admin/AdminDashboard'
@@ -67,9 +69,17 @@ const PaymentSuccess = () => {
   const [loading, setLoading] = useState(true)
   const [status, setStatus] = useState(null)
   const [error, setError] = useState(null)
+  const [lastBooking, setLastBooking] = useState(null)
+  const [bookingConfirmed, setBookingConfirmed] = useState(false)
+  const hasToken = !!localStorage.getItem('token')
 
   useEffect(() => {
     let isMounted = true
+    // Load last booking from localStorage for guests returning from redirect
+    try {
+      const lb = JSON.parse(localStorage.getItem('lastBooking') || 'null')
+      if (lb) setLastBooking(lb)
+    } catch {}
     const confirmAndFetch = async () => {
       try {
         // Attempt server-side confirmation without webhook
@@ -90,6 +100,44 @@ const PaymentSuccess = () => {
     return () => { isMounted = false }
   }, [sessionId, ref])
 
+  // Auto-confirm booking for guests once payment is successful
+  useEffect(() => {
+    const autoConfirm = async () => {
+      if (!loading && status && (status.successful || status.status === 'SUCCESS') && lastBooking?.id && !bookingConfirmed) {
+        try {
+          await api.put(`/bookings/${lastBooking.id}/confirm`)
+          setBookingConfirmed(true)
+          toast.success('Booking confirmed')
+        } catch (e) {
+          // If backend requires auth, this may fail; in that case rely on ticket download outcome
+          console.warn('Auto confirmation failed:', e?.response?.data || e?.message)
+        }
+      }
+    }
+    autoConfirm()
+  }, [loading, status, lastBooking, bookingConfirmed])
+
+  const handleDownloadTicket = async () => {
+    if (!lastBooking?.id) return
+    try {
+      const response = await fetch(`http://localhost:8080/api/tickets/download/${lastBooking.id}`)
+      if (!response.ok) throw new Error('Failed to download ticket')
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.style.display = 'none'
+      a.href = url
+      a.download = `ticket_${lastBooking.bookingReference}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      toast.success('Ticket downloaded successfully')
+    } catch (e) {
+      toast.error('Failed to download ticket')
+    }
+  }
+
   return (
     <div className="max-w-2xl mx-auto py-16">
       <h1 className="text-2xl font-bold text-gray-900 mb-4">Payment Successful</h1>
@@ -106,13 +154,38 @@ const PaymentSuccess = () => {
           <div className="space-y-2">
             <p className="text-green-700"><strong>Status:</strong> {status.successful ? 'PAID' : status.status}</p>
             <p><strong>Amount:</strong> {status.amount} {status.currency}</p>
+            {bookingConfirmed && (
+              <p className="text-green-700"><strong>Booking:</strong> CONFIRMED</p>
+            )}
           </div>
         ) : (
           <p className="text-gray-600">Payment status verification not available.</p>
         )}
+        {lastBooking && (
+          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+            <h2 className="font-semibold text-gray-900 mb-2">Your Booking</h2>
+            <p className="text-sm text-blue-800">
+              Booking Reference: <span className="font-mono">{lastBooking.bookingReference}</span>
+            </p>
+            <div className="mt-3 flex space-x-3">
+              <button onClick={handleDownloadTicket} className="btn-primary px-4 py-2 rounded">Download Ticket</button>
+              <button onClick={() => { navigator.clipboard.writeText(lastBooking.bookingReference); toast.success('Reference copied'); }} className="btn-outline px-4 py-2 rounded">Copy Reference</button>
+            </div>
+            <p className="text-xs text-blue-800 mt-3">
+              Keep this reference safe. You can always retrieve your ticket on the Find Booking page using this reference and your contact information.
+            </p>
+            {!bookingConfirmed && (
+              <p className="text-xs text-blue-800 mt-2">If your download fails, please wait a few seconds and refresh this page. The system is confirming your booking automatically.</p>
+            )}
+          </div>
+        )}
         <div className="mt-6 flex space-x-3">
           <Link to="/" className="btn-primary px-4 py-2 rounded">Go Home</Link>
-          <Link to="/customer/bookings" className="btn-outline px-4 py-2 rounded">My Bookings</Link>
+          {hasToken ? (
+            <Link to="/customer/bookings" className="btn-outline px-4 py-2 rounded">My Bookings</Link>
+          ) : (
+            <Link to="/find-booking" className="btn-outline px-4 py-2 rounded">Find Booking</Link>
+          )}
         </div>
       </div>
     </div>
@@ -152,6 +225,7 @@ function App() {
               <Route path="/register/:role" element={<Register />} />
               <Route path="/guest-booking" element={<GuestBooking />} />
               <Route path="/unauthorized" element={<Unauthorized />} />
+              <Route path="/find-booking" element={<FindBooking />} />
               <Route path="/payment/success" element={<PaymentSuccess />} />
               <Route path="/payment/cancel" element={<PaymentCancel />} />
               

@@ -1,11 +1,44 @@
-import React from 'react'
-import { Link, Navigate } from 'react-router-dom'
-import { Bus, Users, MapPin, Calendar, ArrowRight, Shield, Clock, CreditCard } from 'lucide-react'
+import React, { useEffect, useState } from 'react'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { Bus, Users, MapPin, Calendar, ArrowRight, Shield, Clock, CreditCard, Search } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
-import BookingReferenceSearch from '../components/BookingReferenceSearch'
+import { customerAPI } from '../services/api'
 
 const Home = () => {
   const { isAuthenticated, user } = useAuth()
+  const navigate = useNavigate()
+  const [districts, setDistricts] = useState([])
+  const [searchForm, setSearchForm] = useState({
+    originId: '',
+    destinationId: '',
+    departureDate: ''
+  })
+
+  useEffect(() => {
+    const fetchDistricts = async () => {
+      try {
+        const response = await customerAPI.getDistricts()
+        setDistricts(response.data.data || [])
+      } catch (e) {
+        // silent fail on homepage
+      }
+    }
+    fetchDistricts()
+    const today = new Date().toISOString().split('T')[0]
+    setSearchForm(prev => ({ ...prev, departureDate: today }))
+  }, [])
+
+  const handleHeroSearch = (e) => {
+    e.preventDefault()
+    const { originId, destinationId, departureDate } = searchForm
+    if (!originId || !destinationId || !departureDate) return
+    const query = `?originId=${encodeURIComponent(originId)}&destinationId=${encodeURIComponent(destinationId)}&date=${encodeURIComponent(departureDate)}`
+    if (isAuthenticated() && user?.role === 'CUSTOMER') {
+      navigate(`/customer/search${query}`)
+    } else {
+      navigate(`/guest-booking${query}`)
+    }
+  }
 
   // Redirect logged-in users to their appropriate dashboards
   if (isAuthenticated()) {
@@ -76,31 +109,63 @@ const Home = () => {
 
   return (
     <div className="fade-in">
-      {/* Hero Section */}
-      <div className="bg-gradient-to-r from-primary-600 to-primary-800 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+      {/* Hero Section with Search */}
+      <div className="bg-blue-500">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16">
           <div className="text-center">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">
-              Inzira Ticket System
-            </h1>
-            <p className="text-xl md:text-2xl mb-8 text-primary-100">
-              Modern bus ticket management system for Rwanda
-            </p>
-            <div className="flex justify-center space-x-4">
-              <Link
-                to="/guest-booking"
-                className="btn-primary text-lg px-8 py-3 rounded-lg hover:bg-primary-700 transition-colors"
-              >
-                Book a Ticket
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
-              <Link
-                to="/customer/search"
-                className="btn-outline text-lg px-8 py-3 rounded-lg hover:bg-gray-100 transition-colors text-white border-white hover:text-gray-900"
-              >
-                Book with Account
-              </Link>
-            </div>
+            <h1 className="text-4xl md:text-6xl font-bold mb-4 text-white">Inzira Ticket System</h1>
+            <p className="text-lg md:text-xl mb-8 text-white">Modern bus ticket booking across Rwanda</p>
+          </div>
+          <div className="max-w-5xl mx-auto">
+            <form onSubmit={handleHeroSearch} className="bg-white rounded-xl shadow-lg p-4 md:p-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">From</label>
+                  <select
+                    value={searchForm.originId}
+                    onChange={(e) => setSearchForm({ ...searchForm, originId: e.target.value })}
+                    className="input w-full"
+                    required
+                  >
+                    <option value="">Select district</option>
+                    {districts.map((d) => (
+                      <option key={d.id} value={d.id}>{d.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">To</label>
+                  <select
+                    value={searchForm.destinationId}
+                    onChange={(e) => setSearchForm({ ...searchForm, destinationId: e.target.value })}
+                    className="input w-full"
+                    required
+                  >
+                    <option value="">Select district</option>
+                    {districts.map((d) => (
+                      <option key={d.id} value={d.id}>{d.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Date</label>
+                  <input
+                    type="date"
+                    value={searchForm.departureDate}
+                    onChange={(e) => setSearchForm({ ...searchForm, departureDate: e.target.value })}
+                    className="input w-full"
+                    min={new Date().toISOString().split('T')[0]}
+                    required
+                  />
+                </div>
+                <div className="flex items-end">
+                  <button type="submit" className="btn-primary w-full">
+                    <Search className="h-4 w-4 mr-2" />
+                    Search
+                  </button>
+                </div>
+              </div>
+            </form>
           </div>
         </div>
       </div>
@@ -205,25 +270,7 @@ const Home = () => {
         </div>
       </div>
 
-      {/* Booking Reference Search Section */}
-      <div className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Find Your Booking
-            </h2>
-            <p className="text-lg text-gray-600">
-              Lost your ticket? Search by booking reference to download it again
-            </p>
           </div>
-          
-      <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-          <BookingReferenceSearch />
-        </main>
-
-        </div>
-      </div>
-    </div>
   )
 }
 

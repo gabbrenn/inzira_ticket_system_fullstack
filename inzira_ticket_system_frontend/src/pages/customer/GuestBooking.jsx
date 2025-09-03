@@ -1,24 +1,31 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Search, MapPin, Calendar, Clock, Users, ArrowRight, Download, User, Phone, Mail, CheckCircle } from 'lucide-react'
-import { customerAPI } from '../../services/api'
+import { customerAPI, getFileUrl } from '../../services/api'
 import { useAuth } from '../../contexts/AuthContext'
 import { Navigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import PaymentForm from '../../components/PaymentForm'
 import PaymentStatus from '../../components/PaymentStatus'
 
+const timeToMinutes = (hhmm) => {
+  if (!hhmm) return 0
+  const [h, m] = hhmm.split(':').map(Number)
+  return h * 60 + (m || 0)
+}
+
+const inRange = (minutes, start, end) => minutes >= start && minutes <= end
+
 const GuestBooking = () => {
   const { isAuthenticated } = useAuth()
+  const [searchParams] = useSearchParams()
   
-  // Redirect logged-in users to their dashboard
+  // Redirect logged-in users to their dashboard search
   if (isAuthenticated()) {
     return <Navigate to="/customer/search" replace />
   }
 
-  const [provinces, setProvinces] = useState([])
   const [districts, setDistricts] = useState([])
-  const [selectedOriginProvince, setSelectedOriginProvince] = useState('')
-  const [selectedDestinationProvince, setSelectedDestinationProvince] = useState('')
   const [schedules, setSchedules] = useState([])
   const [routePoints, setRoutePoints] = useState({})
   const [loading, setLoading] = useState(false)
@@ -47,50 +54,71 @@ const GuestBooking = () => {
     dropPointId: ''
   })
 
+  const [sortBy, setSortBy] = useState('')
+  const [departureFilter, setDepartureFilter] = useState('')
+
   useEffect(() => {
-    fetchProvinces()
-    fetchDistricts()
-    // Set default date to today
+    const init = async () => {
+      try {
+        setLoading(true)
+        const res = await customerAPI.getDistricts()
+        setDistricts(res.data.data || [])
+      } catch (e) {
+        toast.error('Failed to load districts')
+      } finally {
+        setLoading(false)
+      }
+    }
+    init()
     const today = new Date().toISOString().split('T')[0]
     setSearchForm(prev => ({ ...prev, departureDate: today }))
   }, [])
 
-  const fetchProvinces = async () => {
-    try {
-      const response = await customerAPI.getProvinces()
-      setProvinces(response.data.data || [])
-    } catch (error) {
-      console.error('Failed to fetch provinces:', error)
+  useEffect(() => {
+    // Prefill from query params and auto-search immediately using params
+    const originId = searchParams.get('originId') || ''
+    const destinationId = searchParams.get('destinationId') || ''
+    const date = searchParams.get('date') || ''
+    if (originId || destinationId || date) {
+      // Update UI state for inputs
+      setSearchForm(prev => ({
+        ...prev,
+        originId: originId || prev.originId,
+        destinationId: destinationId || prev.destinationId,
+        departureDate: date || prev.departureDate,
+      }))
+
+      if (originId && destinationId && (date || new Date().toISOString().split('T')[0])) {
+        const params = {
+          originId,
+          destinationId,
+          departureDate: date || new Date().toISOString().split('T')[0]
+        }
+        ;(async () => {
+          try {
+            setSearching(true)
+            const response = await customerAPI.searchSchedules(params)
+            const data = response.data.data || []
+            if (data.length === 0) {
+              toast.info('No schedules found for your search criteria')
+              setSchedules([])
+            } else {
+              setSchedules(data)
+              await fetchRoutePoints(originId)
+              await fetchRoutePoints(destinationId)
+            }
+          } catch (error) {
+            console.error('Search error:', error)
+            toast.error('Failed to search schedules. Please try again.')
+            setSchedules([])
+          } finally {
+            setSearching(false)
+          }
+        })()
+      }
     }
-  }
-
-  const fetchDistricts = async () => {
-    try {
-      setLoading(true)
-      const response = await customerAPI.getDistricts()
-      setDistricts(response.data.data || [])
-    } catch (error) {
-      console.error('Failed to fetch districts:', error)
-      toast.error('Failed to fetch districts. Please try again.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleOriginProvinceChange = (provinceId) => {
-    setSelectedOriginProvince(provinceId)
-    setSearchForm({ ...searchForm, originId: '' })
-  }
-
-  const handleDestinationProvinceChange = (provinceId) => {
-    setSelectedDestinationProvince(provinceId)
-    setSearchForm({ ...searchForm, destinationId: '' })
-  }
-
-  const getFilteredDistricts = (provinceFilter) => {
-    if (!provinceFilter) return districts
-    return districts.filter(district => district.province?.id.toString() === provinceFilter)
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams])
 
   const fetchRoutePoints = async (districtId) => {
     try {
@@ -123,12 +151,13 @@ const GuestBooking = () => {
         destinationId: searchForm.destinationId,
         departureDate: searchForm.departureDate
       })
-      setSchedules(response.data.data || [])
-      
-      if (response.data.data.length === 0) {
+      const data = response.data.data || []
+
+      if (data.length === 0) {
         toast.info('No schedules found for your search criteria')
+        setSchedules([])
       } else {
-        // Fetch route points for origin and destination
+        setSchedules(data)
         await fetchRoutePoints(searchForm.originId)
         await fetchRoutePoints(searchForm.destinationId)
       }
@@ -158,7 +187,6 @@ const GuestBooking = () => {
   const handleCreateGuestBooking = async (e) => {
     e.preventDefault()
     try {
-      // Create guest booking through agent booking endpoint
       const bookingData = {
         agentId: null, // Guest booking
         scheduleId: selectedSchedule.id,
@@ -174,12 +202,11 @@ const GuestBooking = () => {
 
       const response = await customerAPI.createGuestBooking(bookingData)
       const booking = response.data.data
-      
-      // Store the booking and show payment modal
+
       setCurrentBooking(booking)
       setShowBookingModal(false)
       setShowPaymentModal(true)
-      
+
       toast.success(`Booking created successfully! Reference: ${booking.bookingReference}`)
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to create booking')
@@ -189,11 +216,7 @@ const GuestBooking = () => {
   const handleDownloadTicket = async (bookingId) => {
     try {
       const response = await fetch(`http://localhost:8080/api/tickets/download/${bookingId}`)
-      
-      if (!response.ok) {
-        throw new Error('Failed to download ticket')
-      }
-
+      if (!response.ok) throw new Error('Failed to download ticket')
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -204,7 +227,6 @@ const GuestBooking = () => {
       a.click()
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
-      
       toast.success('Ticket downloaded successfully')
     } catch (error) {
       toast.error('Failed to download ticket')
@@ -212,26 +234,43 @@ const GuestBooking = () => {
   }
 
   const handlePaymentSuccess = (status) => {
-    setPaymentStatus(status);
-    setBookingComplete(true);
-    setCompletedBooking(currentBooking);
-    setShowPaymentModal(false);
-    setCurrentBooking(null);
-    setPaymentStatus(null);
-  };
+    setPaymentStatus(status)
+    setBookingComplete(true)
+    setCompletedBooking(currentBooking)
+    setShowPaymentModal(false)
+    setCurrentBooking(null)
+    setPaymentStatus(null)
+  }
 
   const handlePaymentCancel = () => {
-    setShowPaymentModal(false);
-    setCurrentBooking(null);
-    setPaymentStatus(null);
-  };
+    setShowPaymentModal(false)
+    setCurrentBooking(null)
+    setPaymentStatus(null)
+  }
 
   const handlePaymentStatusChange = (status) => {
-    setPaymentStatus(status);
-  };
+    setPaymentStatus(status)
+  }
 
   const originPoints = selectedSchedule ? routePoints[selectedSchedule.agencyRoute.route.origin.id] || [] : []
   const destinationPoints = selectedSchedule ? routePoints[selectedSchedule.agencyRoute.route.destination.id] || [] : []
+
+  const schedulesWithFilters = useMemo(() => {
+    let arr = [...schedules]
+    if (departureFilter) {
+      arr = arr.filter((s) => {
+        const m = timeToMinutes(s.departureTime)
+        if (departureFilter === 'morning') return inRange(m, 5 * 60, 12 * 60)
+        if (departureFilter === 'afternoon') return inRange(m, 12 * 60 + 30, 17 * 60 + 30)
+        if (departureFilter === 'evening') return inRange(m, 18 * 60, 22 * 60)
+        return true
+      })
+    }
+    if (sortBy === 'price') arr.sort((a, b) => a.agencyRoute.price - b.agencyRoute.price)
+    else if (sortBy === 'early') arr.sort((a, b) => timeToMinutes(a.departureTime) - timeToMinutes(b.departureTime))
+    else if (sortBy === 'late') arr.sort((a, b) => timeToMinutes(b.departureTime) - timeToMinutes(a.departureTime))
+    return arr
+  }, [schedules, sortBy, departureFilter])
 
   if (bookingComplete && completedBooking) {
     return (
@@ -260,30 +299,34 @@ const GuestBooking = () => {
             </div>
 
             <div className="space-y-3">
-              <button
-                onClick={() => handleDownloadTicket(completedBooking.id)}
-                className="btn-primary w-full"
-              >
+              <button onClick={() => handleDownloadTicket(completedBooking.id)} className="btn-primary w-full">
                 <Download className="h-4 w-4 mr-2" />
                 Download Ticket
               </button>
               
-              <button
-                onClick={() => {
-                  setBookingComplete(false)
-                  setCompletedBooking(null)
-                }}
-                className="btn-outline w-full"
-              >
+              <a href="/find-booking" className="btn-outline w-full inline-flex items-center justify-center">
+                <Search className="h-4 w-4 mr-2" />
+                Find My Ticket Later
+              </a>
+
+              <button onClick={() => { setBookingComplete(false); setCompletedBooking(null) }} className="btn-outline w-full">
                 Book Another Ticket
               </button>
             </div>
 
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+            <div className="mt-6 p-4 bg-blue-50 rounded-lg text-left">
               <p className="text-sm text-blue-800">
-                <strong>Important:</strong> Save your booking reference <strong>{completedBooking.bookingReference}</strong> 
-                and download your ticket. You can use the booking reference to find your ticket later.
+                <strong>Important:</strong> Save your booking reference <strong>{completedBooking.bookingReference}</strong>. 
+                You can always retrieve your ticket on the Find Booking page using your booking reference and phone or email.
               </p>
+              <div className="mt-2 text-sm text-blue-800">
+                <p>Quick access:</p>
+                <ul className="list-disc list-inside">
+                  <li>Go to <a className="underline" href="/find-booking">Find Booking</a></li>
+                  <li>Enter your booking reference: <span className="font-mono">{completedBooking.bookingReference}</span></li>
+                  <li>Verify using your phone or email</li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>
@@ -292,196 +335,219 @@ const GuestBooking = () => {
   }
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8 fade-in">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Book Without Account</h1>
-        <p className="mt-2 text-gray-600">
-          Book your bus ticket quickly without creating an account
-        </p>
+    <div className="fade-in">
+      <div className="mb-8 bg-blue-500 ">
+        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-10'>
+        {/* <div className='mb-8'>
+          <h1 className="text-3xl font-bold text-white">Book Without Account</h1>
+          <p className="mt-2 text-white">Book your bus ticket quickly without creating an account</p>
+        </div> */}
+
+        {/* Search Form - districts only */}
+        <div className="bg-white rounded-lg shadow-sm border border-blue-500 p-6 mb-8 max-w-5xl mx-auto">
+          <form onSubmit={handleSearch}>
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">From</label>
+                <select
+                  value={searchForm.originId}
+                  onChange={(e) => setSearchForm({ ...searchForm, originId: e.target.value })}
+                  className="input w-full"
+                  required
+                >
+                <option value="">Select origin</option>
+                {districts.map((district) => (
+                  <option key={district.id} value={district.id}>{district.name}</option>
+                ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">To</label>
+                <select
+                  value={searchForm.destinationId}
+                  onChange={(e) => setSearchForm({ ...searchForm, destinationId: e.target.value })}
+                  className="input w-full"
+                  required
+                >
+                <option value="">Select destination</option>
+                {districts.map((district) => (
+                  <option key={district.id} value={district.id}>{district.name}</option>
+                ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Departure Date</label>
+                <input
+                  type="date"
+                  value={searchForm.departureDate}
+                  onChange={(e) => setSearchForm({ ...searchForm, departureDate: e.target.value })}
+                  className="input w-full"
+                  min={new Date().toISOString().split('T')[0]}
+                  required
+                />
+              </div>
+
+              <div className="flex items-end md:col-span-2">
+                <button type="submit" disabled={searching} className="btn-primary w-full">
+                  {searching ? <div className="loading-spinner mr-2"></div> : <Search className="h-4 w-4 mr-2" />}
+                  Search
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+        </div>
       </div>
 
-      {/* Search Form */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-        <form onSubmit={handleSearch}>
-          <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Origin Province
+      {/* Filters + Results 30/70 */}
+      <div className="grid grid-cols-1 lg:grid-cols-10 gap-8 px-10">
+        <aside className="lg:col-span-3 order-2 lg:order-1">
+          <div className="bg-white rounded-lg shadow-sm border border-blue-500 p-4 mb-6">
+            <h3 className="text-sm font-semibold text-gray-900 mb-3">Sort By</h3>
+            <div className="space-y-2 text-sm text-gray-700">
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input type="radio" name="sort" value="price" checked={sortBy==='price'} onChange={() => setSortBy('price')} />
+                <span>Price (lowest to highest)</span>
               </label>
-              <select
-                value={selectedOriginProvince}
-                onChange={(e) => handleOriginProvinceChange(e.target.value)}
-                className="input w-full"
-              >
-                <option value="">All Provinces</option>
-                {provinces.map((province) => (
-                  <option key={province.id} value={province.id}>
-                    {province.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                From
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input type="radio" name="sort" value="early" checked={sortBy==='early'} onChange={() => setSortBy('early')} />
+                <span>Early departure</span>
               </label>
-              <select
-                value={searchForm.originId}
-                onChange={(e) => setSearchForm({ ...searchForm, originId: e.target.value })}
-                className="input w-full"
-                required
-              >
-                <option value="">Select origin</option>
-                {getFilteredDistricts(selectedOriginProvince).map((district) => (
-                  <option key={district.id} value={district.id}>
-                    {district.name} {district.province ? `(${district.province.name})` : ''}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Destination Province
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input type="radio" name="sort" value="late" checked={sortBy==='late'} onChange={() => setSortBy('late')} />
+                <span>Late departure</span>
               </label>
-              <select
-                value={selectedDestinationProvince}
-                onChange={(e) => handleDestinationProvinceChange(e.target.value)}
-                className="input w-full"
-              >
-                <option value="">All Provinces</option>
-                {provinces.map((province) => (
-                  <option key={province.id} value={province.id}>
-                    {province.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                To
-              </label>
-              <select
-                value={searchForm.destinationId}
-                onChange={(e) => setSearchForm({ ...searchForm, destinationId: e.target.value })}
-                className="input w-full"
-                required
-              >
-                <option value="">Select destination</option>
-                {getFilteredDistricts(selectedDestinationProvince).map((district) => (
-                  <option key={district.id} value={district.id}>
-                    {district.name} {district.province ? `(${district.province.name})` : ''}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Departure Date
-              </label>
-              <input
-                type="date"
-                value={searchForm.departureDate}
-                onChange={(e) => setSearchForm({ ...searchForm, departureDate: e.target.value })}
-                className="input w-full"
-                min={new Date().toISOString().split('T')[0]}
-                required
-              />
-            </div>
-
-            <div className="flex items-end">
-              <button
-                type="submit"
-                disabled={searching}
-                className="btn-primary w-full"
-              >
-                {searching ? (
-                  <div className="loading-spinner mr-2"></div>
-                ) : (
-                  <Search className="h-4 w-4 mr-2" />
-                )}
-                Search
-              </button>
+              <button onClick={() => setSortBy('')} className="text-xs text-gray-500 hover:text-gray-700 mt-2">Clear sort</button>
             </div>
           </div>
-        </form>
+
+          <div className="bg-white rounded-lg shadow-sm border border-blue-500 p-4">
+            <h3 className="text-sm font-semibold text-gray-900 mb-3">Departure Time</h3>
+            <div className="space-y-2 text-sm text-gray-700">
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input type="radio" name="dep" value="morning" checked={departureFilter==='morning'} onChange={() => setDepartureFilter('morning')} />
+                <span>5:00 – 12:00 (Morning)</span>
+              </label>
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input type="radio" name="dep" value="afternoon" checked={departureFilter==='afternoon'} onChange={() => setDepartureFilter('afternoon')} />
+                <span>12:30 – 17:30 (Afternoon)</span>
+              </label>
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input type="radio" name="dep" value="evening" checked={departureFilter==='evening'} onChange={() => setDepartureFilter('evening')} />
+                <span>18:00 – 22:00 (Evening)</span>
+              </label>
+              <button onClick={() => setDepartureFilter('')} className="text-xs text-gray-500 hover:text-gray-700 mt-2">Clear filter</button>
+            </div>
+          </div>
+        </aside>
+
+        <section className="lg:col-span-7 order-1 lg:order-2">
+          <div className="bg-white rounded-lg shadow-sm border border-blue-500">
+            <div className="p-6">
+              <h2 className="text-lg font-semibold text-gray-900">Available Schedules ({schedulesWithFilters.length})</h2>
+            </div>
+
+            <div className="p-6">
+              {schedulesWithFilters.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Search className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <p>Search for schedules to book your ticket</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {schedulesWithFilters.map((schedule) => (
+                    <div 
+  key={schedule.id} 
+  className="bg-white border border-blue-500 rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-all"
+>
+  <div className="flex flex-col md:flex-row">
+    
+    {/* Left Section - Trip Info */}
+    <div className="flex-1 p-6 border-b md:border-b-0 md:border-r border-gray-100">
+      {/* Agency Logo + Name */}
+      <div className="flex items-center mb-4">
+        {schedule.agencyRoute.agency.logoPath ? (
+          <img 
+            src={getFileUrl(schedule.agencyRoute.agency.logoPath)} 
+            alt={schedule.agencyRoute.agency.agencyName} 
+            className="w-10 h-10 rounded-md object-cover border border-gray-200 mr-3" 
+          />
+        ) : (
+          <div className="w-10 h-10 rounded-md bg-gray-200 flex items-center justify-center text-sm font-bold text-gray-700 mr-3">
+            {schedule.agencyRoute.agency.agencyName?.slice(0,2).toUpperCase()}
+          </div>
+        )}
+        <h3 className="text-lg font-semibold text-gray-900">
+          {schedule.agencyRoute.agency.agencyName}
+        </h3>
+        <span className="ml-3 px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded-full">
+          {schedule.bus.busType}
+        </span>
       </div>
 
-      {/* Available Schedules */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Available Schedules</h2>
+      {/* Route Info */}
+      <div className="mb-4">
+        <div className="flex items-center text-gray-700 text-sm">
+          <MapPin className="h-4 w-4 mr-2 text-gray-500" />
+          <span>
+            <span className="font-semibold">{schedule.agencyRoute.route.origin.name}</span> → 
+            <span className="font-bold text-gray-900"> {schedule.agencyRoute.route.destination.name}</span>
+          </span>
         </div>
+      </div>
 
-        <div className="p-6">
-          {schedules.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <Search className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-              <p>Search for schedules to book your ticket</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {schedules.map((schedule) => (
-                <div key={schedule.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center mb-2">
-                        <div className="text-lg font-semibold text-gray-900">
-                          {schedule.agencyRoute.agency.agencyName}
-                        </div>
-                        <span className="ml-3 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                          {schedule.bus.busType}
-                        </span>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm text-gray-600">
-                        <div className="flex items-center">
-                          <MapPin className="h-4 w-4 mr-1" />
-                          <span>
-                            {schedule.agencyRoute.route.origin.name} → {schedule.agencyRoute.route.destination.name}
-                          </span>
-                        </div>
-                        <div className="flex items-center">
-                          <Calendar className="h-4 w-4 mr-1" />
-                          <span>{schedule.departureDate}</span>
-                        </div>
-                        <div className="flex items-center">
-                          <Clock className="h-4 w-4 mr-1" />
-                          <span>{schedule.departureTime} - {schedule.arrivalTime}</span>
-                        </div>
-                        <div className="flex items-center">
-                          <Users className="h-4 w-4 mr-1" />
-                          <span>{schedule.availableSeats} seats available</span>
-                        </div>
-                      </div>
-                    </div>
+      {/* Schedule Info */}
+      <div className="grid grid-cols-2 gap-y-3 gap-x-6 text-sm text-gray-600">
+        <div className="flex items-center">
+          <Calendar className="h-4 w-4 mr-2 text-gray-500" />
+          {schedule.departureDate}
+        </div>
+        <div className="flex items-center">
+          <Clock className="h-4 w-4 mr-2 text-gray-500" />
+          {schedule.departureTime}
+           {/* - {schedule.arrivalTime} */}
+        </div>
+        <div className="flex items-center">
+          <Users className="h-4 w-4 mr-2 text-gray-500" />
+          {schedule.availableSeats} seats left
+        </div>
+        <div className="flex items-center">
+          <span className="font-medium text-gray-700">Bus:</span>&nbsp;
+          {schedule.bus.plateNumber}
+        </div>
+      </div>
+    </div>
 
-                    <div className="ml-6 text-right">
-                      <div className="text-2xl font-bold text-primary-600 mb-2">
-                        {schedule.agencyRoute.price} RWF
-                      </div>
-                      <button
-                        onClick={() => handleBookTicket(schedule)}
-                        disabled={schedule.availableSeats === 0}
-                        className={`btn-primary ${
-                          schedule.availableSeats === 0 
-                            ? 'opacity-50 cursor-not-allowed' 
-                            : ''
-                        }`}
-                      >
-                        {schedule.availableSeats === 0 ? 'Sold Out' : 'Book Now'}
-                        {schedule.availableSeats > 0 && <ArrowRight className="h-4 w-4 ml-2" />}
-                      </button>
-                    </div>
-                  </div>
+    {/* Right Section - Price & Action */}
+    <div className="flex flex-col justify-between p-6 text-center md:text-right bg-gray-50 w-full md:w-56">
+      <div>
+        <div className="text-2xl font-bold text-blue-600">{schedule.agencyRoute.price} RWF</div>
+        <div className="text-xs text-gray-500 mt-1">per ticket</div>
+      </div>
+      <button
+        onClick={() => handleBookTicket(schedule)}
+        disabled={schedule.availableSeats === 0}
+        className={`mt-4 flex items-center justify-center w-full md:w-auto px-5 py-2 rounded-lg font-medium transition-colors
+          ${schedule.availableSeats === 0 
+            ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+            : 'bg-blue-600 hover:bg-blue-700 text-white'}
+        `}
+      >
+        {schedule.availableSeats === 0 ? 'Sold Out' : 'Book Now'}
+        {schedule.availableSeats > 0 && <ArrowRight className="h-4 w-4 ml-2" />}
+      </button>
+    </div>
+  </div>
+</div>
+
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
-          )}
-        </div>
+          </div>
+        </section>
       </div>
 
       {/* Guest Booking Modal */}
@@ -490,12 +556,7 @@ const GuestBooking = () => {
           <div className="bg-white rounded-lg p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">Book Your Ticket</h3>
-              <button
-                onClick={() => setShowBookingModal(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                ×
-              </button>
+              <button onClick={() => setShowBookingModal(false)} className="text-gray-400 hover:text-gray-600">×</button>
             </div>
 
             <div className="mb-4 p-4 bg-gray-50 rounded-lg">
@@ -514,70 +575,28 @@ const GuestBooking = () => {
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      <User className="h-4 w-4 inline mr-1" />
-                      First Name *
-                    </label>
-                    <input
-                      type="text"
-                      value={bookingForm.firstName}
-                      onChange={(e) => setBookingForm({ ...bookingForm, firstName: e.target.value })}
-                      className="input w-full"
-                      required
-                    />
+                    <label className="block text-sm font-medium text-gray-700 mb-2"><User className="h-4 w-4 inline mr-1" />First Name *</label>
+                    <input type="text" value={bookingForm.firstName} onChange={(e) => setBookingForm({ ...bookingForm, firstName: e.target.value })} className="input w-full" required />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Last Name *
-                    </label>
-                    <input
-                      type="text"
-                      value={bookingForm.lastName}
-                      onChange={(e) => setBookingForm({ ...bookingForm, lastName: e.target.value })}
-                      className="input w-full"
-                      required
-                    />
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Last Name *</label>
+                    <input type="text" value={bookingForm.lastName} onChange={(e) => setBookingForm({ ...bookingForm, lastName: e.target.value })} className="input w-full" required />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Phone className="h-4 w-4 inline mr-1" />
-                    Phone Number *
-                  </label>
-                  <input
-                    type="tel"
-                    value={bookingForm.phoneNumber}
-                    onChange={(e) => setBookingForm({ ...bookingForm, phoneNumber: e.target.value })}
-                    className="input w-full"
-                    required
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-2"><Phone className="h-4 w-4 inline mr-1" />Phone Number *</label>
+                  <input type="tel" value={bookingForm.phoneNumber} onChange={(e) => setBookingForm({ ...bookingForm, phoneNumber: e.target.value })} className="input w-full" required />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Mail className="h-4 w-4 inline mr-1" />
-                    Email (Optional)
-                  </label>
-                  <input
-                    type="email"
-                    value={bookingForm.email}
-                    onChange={(e) => setBookingForm({ ...bookingForm, email: e.target.value })}
-                    className="input w-full"
-                    placeholder="For booking confirmations"
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-2"><Mail className="h-4 w-4 inline mr-1" />Email (Optional)</label>
+                  <input type="email" value={bookingForm.email} onChange={(e) => setBookingForm({ ...bookingForm, email: e.target.value })} className="input w-full" placeholder="For booking confirmations" />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Number of Seats
-                  </label>
-                  <select
-                    value={bookingForm.numberOfSeats}
-                    onChange={(e) => setBookingForm({ ...bookingForm, numberOfSeats: e.target.value })}
-                    className="input w-full"
-                    required
-                  >
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Number of Seats</label>
+                  <select value={bookingForm.numberOfSeats} onChange={(e) => setBookingForm({ ...bookingForm, numberOfSeats: e.target.value })} className="input w-full" required>
                     {[...Array(Math.min(selectedSchedule.availableSeats, 5))].map((_, i) => (
                       <option key={i + 1} value={i + 1}>{i + 1} seat{i > 0 ? 's' : ''}</option>
                     ))}
@@ -585,39 +604,21 @@ const GuestBooking = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Pickup Point
-                  </label>
-                  <select
-                    value={bookingForm.pickupPointId}
-                    onChange={(e) => setBookingForm({ ...bookingForm, pickupPointId: e.target.value })}
-                    className="input w-full"
-                    required
-                  >
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Pickup Point</label>
+                  <select value={bookingForm.pickupPointId} onChange={(e) => setBookingForm({ ...bookingForm, pickupPointId: e.target.value })} className="input w-full" required>
                     <option value="">Select pickup point</option>
                     {originPoints.map((point) => (
-                      <option key={point.id} value={point.id}>
-                        {point.name}
-                      </option>
+                      <option key={point.id} value={point.id}>{point.name}</option>
                     ))}
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Drop Point
-                  </label>
-                  <select
-                    value={bookingForm.dropPointId}
-                    onChange={(e) => setBookingForm({ ...bookingForm, dropPointId: e.target.value })}
-                    className="input w-full"
-                    required
-                  >
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Drop Point</label>
+                  <select value={bookingForm.dropPointId} onChange={(e) => setBookingForm({ ...bookingForm, dropPointId: e.target.value })} className="input w-full" required>
                     <option value="">Select drop point</option>
                     {destinationPoints.map((point) => (
-                      <option key={point.id} value={point.id}>
-                        {point.name}
-                      </option>
+                      <option key={point.id} value={point.id}>{point.name}</option>
                     ))}
                   </select>
                 </div>
@@ -625,24 +626,14 @@ const GuestBooking = () => {
                 <div className="p-4 bg-blue-50 rounded-lg">
                   <div className="flex justify-between items-center">
                     <span className="font-medium text-gray-900">Total Amount:</span>
-                    <span className="text-xl font-bold text-primary-600">
-                      {(selectedSchedule.agencyRoute.price * bookingForm.numberOfSeats).toLocaleString()} RWF
-                    </span>
+                    <span className="text-xl font-bold text-primary-600">{(selectedSchedule.agencyRoute.price * bookingForm.numberOfSeats).toLocaleString()} RWF</span>
                   </div>
                 </div>
               </div>
 
               <div className="flex space-x-3 mt-6">
-                <button type="submit" className="btn-primary flex-1">
-                  Confirm Booking
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowBookingModal(false)}
-                  className="btn-secondary flex-1"
-                >
-                  Cancel
-                </button>
+                <button type="submit" className="btn-primary flex-1">Confirm Booking</button>
+                <button type="button" onClick={() => setShowBookingModal(false)} className="btn-secondary flex-1">Cancel</button>
               </div>
             </form>
           </div>
@@ -655,34 +646,15 @@ const GuestBooking = () => {
           <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">Complete Your Payment</h3>
-              <button
-                onClick={() => {
-                  setShowPaymentModal(false);
-                  setCurrentBooking(null);
-                }}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                ×
-              </button>
+              <button onClick={() => { setShowPaymentModal(false); setCurrentBooking(null); }} className="text-gray-400 hover:text-gray-600">×</button>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Payment Form */}
               <div>
-                <PaymentForm 
-                  booking={currentBooking}
-                  onPaymentSuccess={handlePaymentSuccess}
-                  onPaymentCancel={handlePaymentCancel}
-                  allowCash={false}
-                />
+                <PaymentForm booking={currentBooking} onPaymentSuccess={handlePaymentSuccess} onPaymentCancel={handlePaymentCancel} allowCash={false} />
               </div>
-
-              {/* Payment Status */}
               <div>
-                <PaymentStatus 
-                  transactionReference={paymentStatus?.transactionReference}
-                  onStatusChange={handlePaymentStatusChange}
-                />
+                <PaymentStatus transactionReference={paymentStatus?.transactionReference} onStatusChange={handlePaymentStatusChange} />
               </div>
             </div>
           </div>

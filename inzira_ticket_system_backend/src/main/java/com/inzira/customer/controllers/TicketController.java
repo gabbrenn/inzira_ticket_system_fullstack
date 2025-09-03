@@ -32,7 +32,20 @@ public class TicketController {
                 throw new ResourceNotFoundException("Ticket PDF not available for this booking");
             }
 
-            Path filePath = Paths.get("uploads").resolve(booking.getTicketPdfPath());
+            // Normalize path: booking.getTicketPdfPath() may already include 'uploads/' or be absolute
+            String stored = booking.getTicketPdfPath();
+            Path filePath;
+            if (stored == null || stored.isBlank()) {
+                throw new ResourceNotFoundException("Ticket PDF not available for this booking");
+            }
+            String normalized = stored.replace("\\", "/");
+            if (normalized.startsWith("/")) {
+                filePath = Paths.get(normalized);
+            } else if (normalized.startsWith("uploads/")) {
+                filePath = Paths.get(normalized);
+            } else {
+                filePath = Paths.get("uploads").resolve(normalized);
+            }
             Resource resource = new UrlResource(filePath.toUri());
 
             if (!resource.exists()) {

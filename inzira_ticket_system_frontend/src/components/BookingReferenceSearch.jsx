@@ -14,6 +14,25 @@ const BookingReferenceSearch = () => {
   const [loading, setLoading] = useState(false)
   const [showQRModal, setShowQRModal] = useState(false)
 
+  const normalizePhone = (value) => {
+    if (!value) return ''
+    // remove non-digits
+    let d = String(value).replace(/\D/g, '')
+    // remove leading zeros
+    d = d.replace(/^0+/, '')
+    // For comparison, use last 9 or 10 digits to handle country codes
+    if (d.length > 10) d = d.slice(-10)
+    return d
+  }
+
+  const emailsEqual = (a, b) => (a || '').trim().toLowerCase() === (b || '').trim().toLowerCase()
+
+  const phonesEqual = (a, b) => {
+    const na = normalizePhone(a)
+    const nb = normalizePhone(b)
+    return na === nb || (na.length > 0 && nb.length > 0 && na.slice(-9) === nb.slice(-9))
+  }
+
   const handleSearch = async (e) => {
     e.preventDefault()
     
@@ -38,10 +57,10 @@ const BookingReferenceSearch = () => {
       
       const foundBooking = response.data.data
 
-      // Verify the booking belongs to the person searching
+      // Verify the booking belongs to the person searching (normalize contact)
       const customerMatch = searchForm.verificationMethod === 'phone'
-        ? foundBooking.customer.phoneNumber === searchForm.phoneNumber
-        : foundBooking.customer.email === searchForm.email
+        ? phonesEqual(foundBooking.customer?.phoneNumber, searchForm.phoneNumber)
+        : emailsEqual(foundBooking.customer?.email, searchForm.email)
 
       if (!customerMatch) {
         toast.error('Booking reference does not match the provided contact information')
@@ -62,11 +81,8 @@ const BookingReferenceSearch = () => {
     if (!booking) return
     
     try {
-      const response = await fetch(`http://localhost:8080/api/tickets/download/${booking.id}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
-        }
-      })
+      // Do not send Authorization header for guests; endpoint should be public
+      const response = await fetch(`http://localhost:8080/api/tickets/download/${booking.id}`)
       
       if (!response.ok) {
         throw new Error('Failed to download ticket')

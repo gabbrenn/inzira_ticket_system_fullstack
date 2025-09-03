@@ -3,6 +3,7 @@ import { Search, Calendar, MapPin, Clock, CreditCard, Filter, Download } from 'l
 import { agencyAPI } from '../../services/api'
 import { useAuth } from '../../contexts/AuthContext'
 import toast from 'react-hot-toast'
+import Pagination from '../../components/Pagination'
 
 const AgencyBookingHistory = () => {
   const [bookings, setBookings] = useState([])
@@ -12,11 +13,18 @@ const AgencyBookingHistory = () => {
   const [dateFilter, setDateFilter] = useState('')
   const { user } = useAuth()
 
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
+
   useEffect(() => {
     if (user?.roleEntityId) {
       fetchBookings()
     }
   }, [user])
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, statusFilter, dateFilter])
 
   const fetchBookings = async () => {
     try {
@@ -76,6 +84,10 @@ const AgencyBookingHistory = () => {
     
     return matchesSearch && matchesStatus && matchesDate
   })
+
+  const totalPages = Math.ceil(filteredBookings.length / itemsPerPage) || 1
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const paginatedBookings = filteredBookings.slice(startIndex, startIndex + itemsPerPage)
 
   const totalRevenue = filteredBookings
     .filter(b => b.status === 'CONFIRMED' || b.status === 'COMPLETED')
@@ -227,7 +239,7 @@ const AgencyBookingHistory = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredBookings.map((booking) => (
+                  {paginatedBookings.map((booking) => (
                     <tr key={booking.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
@@ -280,6 +292,13 @@ const AgencyBookingHistory = () => {
           )}
         </div>
       </div>
+    <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        itemsPerPage={itemsPerPage}
+        totalItems={filteredBookings.length}
+      />
     </div>
   )
 }

@@ -1,6 +1,6 @@
 .m2
 .env
-
+uploads/
 HELP.md
 target/
 !.mvn/wrapper/maven-wrapper.jar
