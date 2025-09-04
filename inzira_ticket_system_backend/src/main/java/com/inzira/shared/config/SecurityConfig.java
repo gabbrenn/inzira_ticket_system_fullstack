@@ -1,6 +1,7 @@
 package com.inzira.shared.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -15,7 +16,9 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.inzira.shared.security.JwtAuthenticationFilter;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
@@ -23,6 +26,9 @@ public class SecurityConfig {
 
     @Autowired
     private JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @Autowired
+    private Environment env;
 
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
@@ -93,9 +99,33 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+
+        // Read allowed origins from property or env (comma-separated)
+        String raw = env.getProperty("app.cors.allowed-origins");
+        if (raw == null || raw.isBlank()) {
+            raw = env.getProperty("CORS_ALLOWED_ORIGINS");
+        }
+        if (raw == null || raw.isBlank()) {
+            raw = "http://localhost:5173"; // default for dev
+        }
+
+        List<String> entries = Arrays.stream(raw.split(","))
+            .map(String::trim)
+            .filter(s -> !s.isEmpty())
+            .toList();
+
+        List<String> exactOrigins = new ArrayList<>();
+        List<String> originPatterns = new ArrayList<>();
+        for (String o : entries) {
+            if (o.contains("*")) originPatterns.add(o); else exactOrigins.add(o);
+        }
+
+        if (!exactOrigins.isEmpty()) configuration.setAllowedOrigins(exactOrigins);
+        if (!originPatterns.isEmpty()) configuration.setAllowedOriginPatterns(originPatterns);
+
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(List.of("*"));
+        configuration.setExposedHeaders(List.of("Content-Disposition"));
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

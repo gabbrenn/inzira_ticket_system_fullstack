@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Search, Calendar, MapPin, Clock, CreditCard, Download, X, CheckCircle, QrCode } from 'lucide-react'
-import { customerAPI } from '../../services/api'
+import { customerAPI, getFileUrl } from '../../services/api'
 import { useAuth } from '../../contexts/AuthContext'
 import toast from 'react-hot-toast'
 import Pagination from '../../components/Pagination'
@@ -276,8 +276,20 @@ const BookingManagement = () => {
                   </div>
 
                   <div className="flex justify-between items-center pt-4 border-t border-gray-200">
-                    <div className="text-sm text-gray-600">
-                      <span className="font-medium">Agency:</span> {booking.schedule.agencyRoute.agency.agencyName}
+                    <div className="text-sm text-gray-600 flex items-center">
+                      {booking?.schedule?.agencyRoute?.agency?.logoPath ? (
+                        <img
+                          src={getFileUrl(booking.schedule.agencyRoute.agency.logoPath)}
+                          alt={booking.schedule.agencyRoute.agency.agencyName}
+                          className="w-8 h-8 rounded-md object-cover border border-gray-200 mr-2"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 rounded-md bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-700 mr-2">
+                          {booking?.schedule?.agencyRoute?.agency?.agencyName?.slice(0,2)?.toUpperCase() || 'AG'}
+                        </div>
+                      )}
+                      <span className="font-medium mr-1">Agency:</span>
+                      <span className="text-gray-900">{booking.schedule.agencyRoute.agency.agencyName}</span>
                     </div>
                     <div className="flex space-x-2">
                       {booking.status === 'PENDING' && (

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Plus, Edit, Trash2, MapPin, Save, X, Building2 } from 'lucide-react'
 import { adminAPI } from '../../services/api'
 import toast from 'react-hot-toast'
+import Pagination from '../../components/Pagination'
 
 const DistrictManagement = () => {
   const [provinces, setProvinces] = useState([])
@@ -13,6 +14,11 @@ const DistrictManagement = () => {
   const [selectedDistrict, setSelectedDistrict] = useState(null)
   const [editingDistrict, setEditingDistrict] = useState(null)
   const [editingPoint, setEditingPoint] = useState(null)
+
+  // Search & pagination for districts
+  const [districtSearch, setDistrictSearch] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
 
   const [districtForm, setDistrictForm] = useState({
     name: '',
@@ -28,6 +34,11 @@ const DistrictManagement = () => {
     fetchDistricts()
     fetchProvinces()
   }, [])
+
+  // Reset page when search text changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [districtSearch])
 
   const fetchProvinces = async () => {
     try {
@@ -194,13 +205,72 @@ const DistrictManagement = () => {
           </div>
 
           <div className="p-6">
+            {/* Filters for Districts */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Search Districts</label>
+                <input
+                  type="text"
+                  value={districtSearch}
+                  onChange={(e) => setDistrictSearch(e.target.value)}
+                  placeholder="Search by district or province..."
+                  className="input w-full"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Items per page</label>
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                  className="input w-full"
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                </select>
+              </div>
+              <div className="flex items-end">
+                <div className="text-sm text-gray-500">
+                  Total: {
+                    districts.filter(d => {
+                      const q = districtSearch.trim().toLowerCase()
+                      if (!q) return true
+                      const name = (d.name || '').toLowerCase()
+                      const prov = (d.province?.name || '').toLowerCase()
+                      return name.includes(q) || prov.includes(q)
+                    }).length
+                  }
+                </div>
+              </div>
+            </div>
+
             {loading ? (
               <div className="text-center py-4">
                 <div className="loading-spinner mx-auto"></div>
               </div>
             ) : (
               <div className="space-y-3">
-                {districts.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)).map((district) => (
+                {(() => {
+                  const q = districtSearch.trim().toLowerCase()
+                  const filtered = districts
+                    .filter(d => {
+                      if (!q) return true
+                      const name = (d.name || '').toLowerCase()
+                      const prov = (d.province?.name || '').toLowerCase()
+                      return name.includes(q) || prov.includes(q)
+                    })
+                    .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+
+                  const total = filtered.length
+                  const totalPages = Math.max(1, Math.ceil(total / itemsPerPage))
+                  const page = Math.min(currentPage, totalPages)
+                  const startIdx = (page - 1) * itemsPerPage
+                  const pageItems = filtered.slice(startIdx, startIdx + itemsPerPage)
+
+                  return (
+                    <>
+                      {pageItems.map((district) => (
                   <div
                     key={district.id}
                     className={`p-4 border rounded-lg cursor-pointer transition-colors ${
@@ -240,7 +310,21 @@ const DistrictManagement = () => {
                       </div>
                     </div>
                   </div>
-                ))}
+                      ))}
+
+                      {/* Pagination controls */}
+                      <div className="pt-2">
+                        <Pagination
+                          currentPage={page}
+                          totalPages={totalPages}
+                          onPageChange={setCurrentPage}
+                          itemsPerPage={itemsPerPage}
+                          totalItems={total}
+                        />
+                      </div>
+                    </>
+                  )
+                })()}
               </div>
             )}
           </div>

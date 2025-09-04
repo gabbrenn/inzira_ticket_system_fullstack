@@ -71,6 +71,15 @@ export const sharedAPI = {
 
 // Admin APIs
 export const adminAPI = {
+  // Listings and exports
+  listBookings: (params) => api.get('/admin/bookings', { params }),
+  exportBookingsCsv: (params) => api.get('/admin/bookings/export', { params, responseType: 'blob' }),
+  listPayments: (params) => api.get('/admin/payments', { params }),
+  exportPaymentsCsv: (params) => api.get('/admin/payments/export', { params, responseType: 'blob' }),
+  // Admin metrics
+  getMetricsSummary: () => api.get('/admin/metrics/summary'),
+  getScheduleStats: () => api.get('/admin/schedules/stats'),
+  cleanupExpiredSchedules: () => api.post('/admin/schedules/cleanup-expired'),
   // Admin registration
   registerAdmin: (data) => api.post('/admins/register', data),
   
@@ -344,19 +353,25 @@ export const getFileUrl = (path) => {
   // already absolute URL
   if (/^https?:\/\//i.test(p)) return p
   // normalize Windows-style backslashes to forward slashes
-  p = p.replace(/\\\\/g, '/').replace(/\\/g, '/').replace(/\\/g, '/')
+  p = p.replace(/\\\\/g, '/').replace(/\\/g, '/')
 
-  // If a filesystem path contains uploads folder, extract public segment
+  // Determine the public path that backend serves under /uploads/**
   const lower = p.toLowerCase()
-  const idx = lower.indexOf('uploads/')
-  if (idx !== -1) {
-    p = '/' + p.substring(idx)
+  let publicPath = ''
+  if (lower.startsWith('/uploads/')) {
+    publicPath = p
+  } else if (lower.startsWith('uploads/')) {
+    publicPath = '/' + p
+  } else if (lower.includes('uploads/')) {
+    publicPath = '/' + p.substring(lower.indexOf('uploads/'))
+  } else {
+    // e.g., "user-profile/uuid_file.png" -> "/uploads/user-profile/uuid_file.png"
+    publicPath = '/uploads/' + p.replace(/^\/+/, '')
   }
 
   // base API host without trailing /api
   const base = API_BASE_URL.replace(/\/api\/?$/, '')
-  // absolute path on backend (e.g., /uploads/...) or relative (uploads/...)
-  return p.startsWith('/') ? `${base}${p}` : `${base}/${p}`
+  return `${base}${publicPath}`
 }
 
 export default api

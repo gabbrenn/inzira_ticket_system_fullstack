@@ -211,7 +211,7 @@ const Home = () => {
               Access Your Dashboard
             </h2>
             <p className="text-lg text-gray-600">
-              Choose your role to access the appropriate management panel
+              Manage your Ticket access the Your dashboard panel
             </p>
           </div>
           

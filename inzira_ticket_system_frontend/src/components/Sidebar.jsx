@@ -25,7 +25,9 @@ const Sidebar = ({ isOpen, onClose }) => {
         { name: 'Change Password', href: '/change-password', icon: Key },
         { name: 'Provinces', href: '/admin/provinces', icon: Building2 },
         { name: 'Districts', href: '/admin/districts', icon: MapPin },
-        { name: 'Routes', href: '/admin/routes', icon: Route },
+  { name: 'Routes', href: '/admin/routes', icon: Route },
+  { name: 'Bookings', href: '/admin/bookings', icon: ClipboardList },
+  { name: 'Payments', href: '/admin/payments', icon: CreditCard },
         { name: 'Agencies', href: '/admin/agencies', icon: Building2 },
       ]
     }

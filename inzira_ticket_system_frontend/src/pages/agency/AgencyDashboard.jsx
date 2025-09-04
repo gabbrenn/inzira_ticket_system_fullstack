@@ -33,8 +33,10 @@ const AgencyDashboard = () => {
   const fetchRecentBookings = async () => {
     try {
       const response = await agencyAPI.getBookingsByAgency(user.roleEntityId)
-      const bookings = response.data.data || []
-      setRecentBookings(bookings.slice(0, 5))
+      const bookings = (response.data.data || [])
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .slice(0, 3)
+      setRecentBookings(bookings)
     } catch (error) {
       console.error('Failed to fetch recent bookings:', error)
     }

@@ -24,7 +24,7 @@ const AgencyBookingHistory = () => {
 
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchTerm, statusFilter, dateFilter])
+  }, [searchTerm, statusFilter, dateFilter, itemsPerPage])
 
   const fetchBookings = async () => {
     try {
@@ -104,7 +104,7 @@ const AgencyBookingHistory = () => {
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Search Bookings
@@ -148,6 +148,22 @@ const AgencyBookingHistory = () => {
               onChange={(e) => setDateFilter(e.target.value)}
               className="input w-full"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Items per page
+            </label>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => setItemsPerPage(Number(e.target.value))}
+              className="input w-full"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+            </select>
           </div>
 
           <div className="flex items-end">

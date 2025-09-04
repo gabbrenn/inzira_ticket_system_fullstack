@@ -3,6 +3,7 @@ import { Plus, Edit, Trash2, Calendar, Save, X, Clock, Ban } from 'lucide-react'
 import { agencyAPI } from '../../services/api'
 import { useAuth } from '../../contexts/AuthContext'
 import toast from 'react-hot-toast'
+import Pagination from '../../components/Pagination'
 
 const ScheduleManagement = () => {
   const [schedules, setSchedules] = useState([])
@@ -13,6 +14,8 @@ const ScheduleManagement = () => {
   const [showForm, setShowForm] = useState(false)
   const [editingSchedule, setEditingSchedule] = useState(null)
   const { user } = useAuth()
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
 
   const [scheduleForm, setScheduleForm] = useState({
     agencyRoute: { id: '' },
@@ -31,6 +34,10 @@ const ScheduleManagement = () => {
       fetchDrivers()
     }
   }, [])
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [itemsPerPage])
 
   const fetchSchedules = async () => {
     try {
@@ -206,6 +213,24 @@ const ScheduleManagement = () => {
             </div>
           ) : (
             <div className="overflow-x-auto">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
+                <div className="text-sm text-gray-600">
+                  Total schedules: {schedules.length}
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-sm text-gray-700">Items per page</label>
+                  <select
+                    value={itemsPerPage}
+                    onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                    className="input w-28"
+                  >
+                    <option value={5}>5</option>
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                  </select>
+                </div>
+              </div>
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
@@ -233,7 +258,9 @@ const ScheduleManagement = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {schedules.map((schedule) => (
+                  {schedules
+                    .slice((currentPage - 1) * itemsPerPage, (currentPage - 1) * itemsPerPage + itemsPerPage)
+                    .map((schedule) => (
                     <tr key={schedule.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
@@ -296,6 +323,13 @@ const ScheduleManagement = () => {
                   ))}
                 </tbody>
               </table>
+              <Pagination
+                currentPage={currentPage}
+                totalPages={Math.ceil(schedules.length / itemsPerPage) || 1}
+                onPageChange={setCurrentPage}
+                itemsPerPage={itemsPerPage}
+                totalItems={schedules.length}
+              />
             </div>
           )}
         </div>

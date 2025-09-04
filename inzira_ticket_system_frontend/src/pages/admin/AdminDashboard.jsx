@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { MapPin, Route, Building2, Users, TrendingUp, Activity, AlertCircle, CheckCircle } from 'lucide-react'
+import { MapPin, Route, Building2, Users, TrendingUp, Activity, AlertCircle, CheckCircle, Trash2 } from 'lucide-react'
 import { adminAPI } from '../../services/api'
 import DashboardCard from '../../components/DashboardCard'
 import toast from 'react-hot-toast'
@@ -24,32 +24,51 @@ const AdminDashboard = () => {
   const fetchSystemStats = async () => {
     try {
       setLoading(true)
-      const [provincesRes, districtsRes, routesRes, agenciesRes] = await Promise.all([
-        adminAPI.getProvinces(),
-        adminAPI.getDistricts(),
-        adminAPI.getRoutes(),
-        adminAPI.getAgencies()
+      const [summaryRes, scheduleStatsRes] = await Promise.all([
+        adminAPI.getMetricsSummary(),
+        adminAPI.getScheduleStats()
       ])
-      
-      const provinces = provincesRes.data.data || []
-      const districts = districtsRes.data.data || []
-      const routes = routesRes.data.data || []
-      const agencies = agenciesRes.data.data || []
-      
+
+      const summary = summaryRes.data.data || {}
+      const scheduleStats = scheduleStatsRes.data.data || {}
+
       setSystemStats({
-        totalProvinces: provinces.length,
-        totalDistricts: districts.length,
-        totalRoutes: routes.length,
-        totalAgencies: agencies.length,
-        activeAgencies: agencies.filter(a => a.status === 'ACTIVE').length,
-        inactiveAgencies: agencies.filter(a => a.status === 'INACTIVE').length,
-        totalRoutePoints: districts.reduce((sum, d) => sum + (d.locations?.length || 0), 0),
+        totalProvinces: summary.totalProvinces || 0,
+        totalDistricts: summary.totalDistricts || 0,
+        totalRoutes: summary.totalRoutes || 0,
+        totalAgencies: summary.totalAgencies || 0,
+        activeAgencies: summary.activeAgencies || 0,
+        inactiveAgencies: summary.inactiveAgencies || 0,
+        totalRoutePoints: scheduleStats.totalSchedules || 0,
+        bookings: {
+          total: summary.totalBookings || 0,
+          confirmed: summary.confirmedBookings || 0,
+          pending: summary.pendingBookings || 0,
+          cancelled: summary.cancelledBookings || 0,
+          completed: summary.completedBookings || 0,
+        },
+        payments: {
+          success: summary.paymentsSuccess || 0,
+          pending: summary.paymentsPending || 0,
+          refunded: summary.paymentsRefunded || 0,
+        },
+        scheduleStats
       })
     } catch (error) {
       console.error('Failed to fetch system stats:', error)
       toast.error('Failed to load system statistics')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleCleanupExpired = async () => {
+    try {
+      const res = await adminAPI.cleanupExpiredSchedules()
+      toast.success(res.data.message || 'Expired schedules cleaned')
+      fetchSystemStats()
+    } catch (e) {
+      toast.error(e?.response?.data?.message || 'Failed to cleanup schedules')
     }
   }
 
@@ -105,7 +124,7 @@ const AdminDashboard = () => {
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <DashboardCard
+  <DashboardCard
           title="Total Provinces"
           value={systemStats.totalProvinces || 0}
           icon={Building2}
@@ -119,9 +138,10 @@ const AdminDashboard = () => {
           icon={MapPin}
           color="text-blue-600"
           bgColor="bg-blue-50"
-          subtitle={`${systemStats.totalRoutePoints} route points`}
+          subtitle={`${systemStats.scheduleStats?.scheduled || 0} scheduled / ${systemStats.scheduleStats?.cancelled || 0} cancelled`
+          }
         />
-        <DashboardCard
+  <DashboardCard
           title="Active Routes"
           value={systemStats.totalRoutes}
           icon={Route}
@@ -129,7 +149,7 @@ const AdminDashboard = () => {
           bgColor="bg-green-50"
           subtitle="Inter-district connections"
         />
-        <DashboardCard
+  <DashboardCard
           title="Registered Agencies"
           value={systemStats.totalAgencies}
           icon={Building2}
@@ -137,7 +157,7 @@ const AdminDashboard = () => {
           bgColor="bg-purple-50"
           subtitle={`${systemStats.activeAgencies} active`}
         />
-        <DashboardCard
+  <DashboardCard
           title="System Health"
           value={systemStats.activeAgencies > 0 ? "Operational" : "Setup Required"}
           icon={systemStats.activeAgencies > 0 ? CheckCircle : AlertCircle}
@@ -184,23 +204,31 @@ const AdminDashboard = () => {
               
               <div className="text-center p-4 bg-gray-50 rounded-lg">
                 <div className="text-2xl font-bold text-blue-600 mb-1">
-                  {systemStats.totalRoutePoints}
+                  {systemStats.bookings?.total || 0}
                 </div>
-                <div className="text-sm text-gray-600">Route Points</div>
+                <div className="text-sm text-gray-600">Total Bookings</div>
                 <div className="text-xs text-gray-500 mt-1">
-                  Across {systemStats.totalDistricts} districts
+                  {systemStats.bookings?.confirmed || 0} confirmed · {systemStats.bookings?.pending || 0} pending
                 </div>
               </div>
               
               <div className="text-center p-4 bg-gray-50 rounded-lg">
                 <div className="text-2xl font-bold text-purple-600 mb-1">
-                  {systemStats.totalRoutes}
+                  {systemStats.payments?.success || 0}
                 </div>
-                <div className="text-sm text-gray-600">Available Routes</div>
+                <div className="text-sm text-gray-600">Successful Payments</div>
                 <div className="text-xs text-gray-500 mt-1">
-                  Inter-district connections
+                  {systemStats.payments?.pending || 0} pending · {systemStats.payments?.refunded || 0} refunded
                 </div>
               </div>
+            </div>
+            <div className="mt-6 flex items-center justify-between p-4 rounded-lg bg-orange-50 border border-orange-200">
+              <div className="text-sm text-orange-800">
+                <strong>Schedules:</strong> {systemStats.scheduleStats?.totalSchedules || 0} total · {systemStats.scheduleStats?.expired || 0} expired · {systemStats.scheduleStats?.cancelled || 0} cancelled
+              </div>
+              <button className="btn-outline flex items-center" onClick={handleCleanupExpired}>
+                <Trash2 className="h-4 w-4 mr-2" /> Cleanup expired
+              </button>
             </div>
           </div>
         </div>

@@ -21,6 +21,8 @@ import ProvinceManagement from './pages/admin/ProvinceManagement'
 import DistrictManagement from './pages/admin/DistrictManagement'
 import RouteManagement from './pages/admin/RouteManagement'
 import AgencyManagement from './pages/admin/AgencyManagement'
+import AdminBookings from './pages/admin/AdminBookings'
+import AdminPayments from './pages/admin/AdminPayments'
 
 // Agency pages
 import AgencyDashboard from './pages/agency/AgencyDashboard'
@@ -262,6 +264,20 @@ function App() {
                 <ProtectedRoute requiredRole="ADMIN">
                   <DashboardLayout>
                     <AgencyManagement />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/bookings" element={
+                <ProtectedRoute requiredRole="ADMIN">
+                  <DashboardLayout>
+                    <AdminBookings />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/payments" element={
+                <ProtectedRoute requiredRole="ADMIN">
+                  <DashboardLayout>
+                    <AdminPayments />
                   </DashboardLayout>
                 </ProtectedRoute>
               } />
