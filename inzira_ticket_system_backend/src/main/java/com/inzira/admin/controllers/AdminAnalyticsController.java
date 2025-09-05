@@ -30,11 +30,15 @@ public class AdminAnalyticsController {
     public ResponseEntity<ApiResponse<List<TrendPoint>>> bookingsByDay(
         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end) {
-        LocalDateTime s = start.atStartOfDay();
-        LocalDateTime e = end.atTime(LocalTime.MAX);
-        List<TrendPoint> points = bookingRepository.countBookingsByDay(s, e).stream()
-            .map(r -> new TrendPoint(String.valueOf(r[0]), ((Number) r[1]).longValue()))
-            .collect(Collectors.toList());
+        LocalDate cur = start;
+        java.util.ArrayList<TrendPoint> points = new java.util.ArrayList<>();
+        while (!cur.isAfter(end)) {
+            LocalDateTime s = cur.atStartOfDay();
+            LocalDateTime e = cur.atTime(LocalTime.MAX);
+            long c = bookingRepository.countByCreatedAtBetween(s, e);
+            points.add(new TrendPoint(cur.toString(), c));
+            cur = cur.plusDays(1);
+        }
         return ResponseEntity.ok(new ApiResponse<>(true, "Bookings per day", points));
     }
 
@@ -42,11 +46,18 @@ public class AdminAnalyticsController {
     public ResponseEntity<ApiResponse<List<TrendPoint>>> bookingsByWeek(
         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end) {
-        LocalDateTime s = start.atStartOfDay();
-        LocalDateTime e = end.atTime(LocalTime.MAX);
-        List<TrendPoint> points = bookingRepository.countBookingsByWeek(s, e).stream()
-            .map(r -> new TrendPoint(String.valueOf(r[0]), ((Number) r[1]).longValue()))
-            .collect(Collectors.toList());
+        // Align to week starts (Monday)
+        LocalDate cur = start.minusDays((start.getDayOfWeek().getValue() + 6) % 7);
+        java.util.ArrayList<TrendPoint> points = new java.util.ArrayList<>();
+        while (!cur.isAfter(end)) {
+            LocalDate weekStart = cur;
+            LocalDate weekEnd = cur.plusDays(6);
+            if (weekStart.isBefore(start)) weekStart = start;
+            if (weekEnd.isAfter(end)) weekEnd = end;
+            long c = bookingRepository.countByCreatedAtBetween(weekStart.atStartOfDay(), weekEnd.atTime(LocalTime.MAX));
+            points.add(new TrendPoint(weekStart.toString(), c));
+            cur = cur.plusWeeks(1);
+        }
         return ResponseEntity.ok(new ApiResponse<>(true, "Bookings per week", points));
     }
 
@@ -54,11 +65,19 @@ public class AdminAnalyticsController {
     public ResponseEntity<ApiResponse<List<TrendPoint>>> paymentsByDay(
         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end) {
-        LocalDateTime s = start.atStartOfDay();
-        LocalDateTime e = end.atTime(LocalTime.MAX);
-        List<TrendPoint> points = paymentRepository.sumPaymentsByDay(s, e).stream()
-            .map(r -> new TrendPoint(String.valueOf(r[0]), ((Number) r[1]).longValue()))
-            .collect(Collectors.toList());
+        LocalDate cur = start;
+        java.util.ArrayList<TrendPoint> points = new java.util.ArrayList<>();
+        while (!cur.isAfter(end)) {
+            LocalDateTime s = cur.atStartOfDay();
+            LocalDateTime e = cur.atTime(LocalTime.MAX);
+            java.math.BigDecimal sum = paymentRepository
+                .findByStatusAndCreatedAtBetween("SUCCESS", s, e)
+                .stream()
+                .map(p -> p.getAmount() == null ? java.math.BigDecimal.ZERO : p.getAmount())
+                .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+            points.add(new TrendPoint(cur.toString(), sum.longValue()));
+            cur = cur.plusDays(1);
+        }
         return ResponseEntity.ok(new ApiResponse<>(true, "Payments per day", points));
     }
 
@@ -67,13 +86,28 @@ public class AdminAnalyticsController {
         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end) {
         LocalDateTime s = start.atStartOfDay();
-        LocalDateTime e = end.atTime(LocalTime.MAX);
-        List<TrendPoint> points = paymentRepository.sumPaymentsByWeek(s, e).stream()
-            .map(r -> new TrendPoint(String.valueOf(r[0]), ((Number) r[1]).longValue()))
-            .collect(Collectors.toList());
+        // Align to week starts (Monday)
+        LocalDate cur = start.minusDays((start.getDayOfWeek().getValue() + 6) % 7);
+        java.util.ArrayList<TrendPoint> points = new java.util.ArrayList<>();
+        while (!cur.isAfter(end)) {
+            LocalDate weekStart = cur;
+            LocalDate weekEnd = cur.plusDays(6);
+            if (weekStart.isBefore(start)) weekStart = start;
+            if (weekEnd.isAfter(end)) weekEnd = end;
+            java.math.BigDecimal sum = paymentRepository
+                .findByStatusAndCreatedAtBetween("SUCCESS", weekStart.atStartOfDay(), weekEnd.atTime(LocalTime.MAX))
+                .stream()
+                .map(p -> p.getAmount() == null ? java.math.BigDecimal.ZERO : p.getAmount())
+                .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+            points.add(new TrendPoint(weekStart.toString(), sum.longValue()));
+            cur = cur.plusWeeks(1);
+        }
         return ResponseEntity.ok(new ApiResponse<>(true, "Payments per week", points));
     }
-
+    // There is no SQL or database-specific code at $PLACEHOLDER$, so there is no conflict between PostgreSQL and MySQL here.
+    // All repository methods used (countByCreatedAtBetween, findByStatusAndCreatedAtBetween, topAgenciesByBookings, topAgenciesByRevenue)
+    // must be implemented in a way that works for both databases, but nothing in this controller is inherently incompatible.
+    // The code uses standard Java and Spring Data features, which are database-agnostic.
     @GetMapping("/top/agencies/bookings")
     public ResponseEntity<ApiResponse<List<LeaderboardRow>>> topAgenciesByBookings(
         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,

@@ -1,0 +1,26 @@
+# Distroless runtime variant (smaller, no package manager)
+# Build stage
+FROM maven:3.9.8-eclipse-temurin-17 AS build
+WORKDIR /workspace
+COPY pom.xml .
+RUN mvn -q -DskipTests dependency:go-offline
+COPY src ./src
+RUN mvn -q -DskipTests package && mkdir extracted && cd extracted && \
+    java -Djarmode=layertools -jar ../target/*.jar extract
+
+# Runtime stage using distroless Java 17
+FROM gcr.io/distroless/java17:nonroot
+WORKDIR /app
+USER nonroot
+
+COPY --from=build /workspace/extracted/dependencies/ ./
+COPY --from=build /workspace/extracted/snapshot-dependencies/ ./
+COPY --from=build /workspace/extracted/spring-boot-loader/ ./
+COPY --from=build /workspace/extracted/application/ ./
+
+EXPOSE 8080
+ENV JAVA_TOOL_OPTIONS="-XX:+UseContainerSupport -Xms256m -Xmx512m" \
+    SPRING_PROFILES_ACTIVE=default
+
+# No shell, so we invoke the launcher class directly
+ENTRYPOINT ["java","org.springframework.boot.loader.launch.JarLauncher"]

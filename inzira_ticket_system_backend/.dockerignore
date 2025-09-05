@@ -1,0 +1,29 @@
+# Maven / Build
+target/
+!.mvn/wrapper/maven-wrapper.jar
+.mvn/
+
+# IDE / VCS
+.git
+.gitignore
+.idea
+*.iml
+.vscode
+
+# Node / Frontend (not needed here)
+node_modules/
+
+# OS / Misc
+.DS_Store
+Thumbs.db
+
+# Local env files
+.env
+.env.*
+
+# Logs
+logs/
+*.log
+
+# Uploads (map as volume in production)
+uploads/

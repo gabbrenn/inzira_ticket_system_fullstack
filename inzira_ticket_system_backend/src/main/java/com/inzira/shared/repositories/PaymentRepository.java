@@ -15,13 +15,10 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     Optional<Payment> findByBookingId(Long bookingId);
     List<Payment> findByStatus(String status);
     Optional<Payment> findByTransactionReference(String transactionReference);
+    java.util.List<Payment> findByStatusAndCreatedAtBetween(String status, java.time.LocalDateTime start, java.time.LocalDateTime end);
 
     // Payment trends
-    @Query("select function('date', p.createdAt) as d, sum(p.amount) from Payment p where p.status = 'SUCCESS' and p.createdAt between :start and :end group by function('date', p.createdAt) order by d asc")
-    java.util.List<Object[]> sumPaymentsByDay(@Param("start") java.time.LocalDateTime start, @Param("end") java.time.LocalDateTime end);
-
-    @Query("select function('yearweek', p.createdAt) as w, sum(p.amount) from Payment p where p.status = 'SUCCESS' and p.createdAt between :start and :end group by function('yearweek', p.createdAt) order by w asc")
-    java.util.List<Object[]> sumPaymentsByWeek(@Param("start") java.time.LocalDateTime start, @Param("end") java.time.LocalDateTime end);
+    // Kept old JPQL aggregations removed to stay DB-agnostic
 
     // Top agencies by revenue
     @Query("select a.id, a.agencyName, sum(p.amount) from Payment p join p.booking b join b.schedule s join s.agencyRoute ar join ar.agency a where p.status = 'SUCCESS' and p.createdAt between :start and :end group by a.id, a.agencyName order by sum(p.amount) desc")
